@@ -13,22 +13,13 @@ packages = [ { include = "cytodataframe", from = "src" } ]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.13"
+# used for data management
 pandas = [
   { version = "<2.2.2", python = "<3.9" },
   { version = "^2.2.2", python = ">=3.9" },
-] # used for data management
-scipy = [
-  { version = "<1.13.0", python = "<3.9" },
-  { version = "^1.13.0", python = ">=3.9" },
-] # used for calculations
+]
 # used for data ingest and export
 pyarrow = "^16.0.0"
-# used for reading yaml configuration files
-pyyaml = "^6.0.1"
-# used for CLI generation
-fire = "^0.6.0"
-# used for template capabilities
-jinja2 = "^3.1.4"
 # used for report generation capabilities
 plotly = "^5.22.0"
 # used for plotly dependencies
@@ -47,6 +38,7 @@ pywavelets = [
 ]
 # used for image modifications in cytodataframe
 opencv-python = "^4.10.0.84"
+# used for report visualizations from within cytodataframe
 cosmicqc = "^0.0.11"
 
 [tool.poetry.group.dev.dependencies]
@@ -56,40 +48,10 @@ pytest = "^8.2.0"
 html2image = "^2.0.4.3"
 # used for test data generation
 sqlalchemy = ">=1.3.6,<2"
-# used for example notebook work
-jupyterlab = "^4.2.3"
-# used for example notebook formatting
-jupytext = "^1.16.2"
-# used for example notebook formatting
-jupyterlab-code-formatter = "^2.2.1"
-# used for example notebook formatting
-black = "^24.4.2"
-# used for example notebook formatting
-isort = "^5.13.2"
 # added to generate test coverage reports
 coverage = "^7.6.0"
 # for standardizing various dev tasks
 poethepoet = "^0.27.0"
-# added for preparing data for CytoDataFrame in examples
-cytotable = "^0.0.10"
-# used to avoid dependency resolution issues during installs
-botocore = ">=1.31.16,<1.31.65 || >=1.32.4,<1.34.35 || >=1.34.41,<1.34.163 || >=1.35.0,<1.35.8"
-# used for visualizing large plot data
-hvplot = "^0.10.0"
-# used for visualization options with hvplot
-datashader = "^0.16.3"
-# added for demonstrating results after using CytoDataFrame
-umap-learn = "^0.5.6"
-# added for compatibility in notebooks with umap-learn dependency tqdm
-ipywidgets = "^8.1.5"
-# added for demonstrating results with CytoDataFrame
-pycytominer = "^1.1.0"
-# added to avoid warnings from datashader implementation
-dask = { version = "^2024.8.0", extras = [ "dataframe" ] }
-# used for rendering plots as images within example notebooks
-selenium = "^4.24.0"
-# used by pandas for extracting metadata and platemap data from S3 through pandas
-s3fs = "^2024.9.0"
 
 [tool.poetry.group.docs.dependencies]
 # used for rendering docs into docsite
@@ -103,12 +65,7 @@ sphinx-multiversion = { git = "https://github.com/J-RN/sphinx-multiversion", rev
 # used for gathering version data for docsite
 dunamai = "^1.22.0"
 # used for theming the docsite
-sphinx-wagtail-theme = "^6.3.0"
-sphinx-book-theme = "^1.1.3"
 pydata-sphinx-theme = "^0.16.0"
-
-[tool.poetry.scripts]
-CytoDataFrame = "CytoDataFrame.cli:cli_analyze"
 
 [tool.poetry-dynamic-versioning]
 enable = true
@@ -154,19 +111,8 @@ lint.select = [
 ]
 # Ignore `E402` and `F401` (unused imports) in all `__init__.py` files
 lint.per-file-ignores."__init__.py" = [ "E402", "F401" ]
-# ignore long line and func def warnings with notebooks
-lint.per-file-ignores."docs/src/examples/*.ipynb" = [ "E501", "E703", "PLR0913" ]
-lint.per-file-ignores."docs/src/examples/*.py" = [ "E501", "E703", "PLR0913" ]
 # ignore typing rules for tests
 lint.per-file-ignores."tests/*" = [ "ANN201", "PLR0913" ]
-
-[tool.isort]
-profile = "black"
-
-[tool.pytest.ini_options]
-markers = [
-  "generate_report_image: tests which involve the creation of report images.",
-]
 
 [tool.coverage.run]
 # settings to avoid errors with cv2 and coverage
