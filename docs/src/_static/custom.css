@@ -1,0 +1,39 @@
+div.cell_output table {
+    border: none;
+    border-collapse: collapse;
+    border-spacing: 0;
+    color: black;
+    font-size: 1em;
+    table-layout: fixed;
+    background: white;
+    overflow: scroll;
+    max-width: 600px;
+}
+
+.pt-5, .py-5 {
+    padding-top: 1rem !important;
+}
+
+section {
+    margin-top: 0rem;
+    margin-bottom: 2rem;
+}
+
+.cell_input div.highlight, .cell_output pre, .cell_input pre, .cell_output .output {
+    border: none;
+    box-shadow: none;
+    overflow: auto;
+}
+
+#main img{
+    max-width:600px;
+}
+
+.page-toc {
+    font-size: .875rem;
+    padding-top: 0 !important;
+    color: #494949;
+    max-height: 100vh;
+    overflow: hidden auto;
+    word-break: break-all;
+}

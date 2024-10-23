@@ -1,0 +1,16 @@
+# defines threshold sets for running qc procedures as part of this project.
+versions:
+  cellprofiler: ">=4.2.4"
+thresholds:
+  # Set a negative threshold to identify both outlier small nuclei
+  # and low formfactor representing non-circular segmentations.
+  small_and_low_formfactor_nuclei:
+    Nuclei_AreaShape_Area: -1
+    Nuclei_AreaShape_FormFactor: -1
+  # find very elongated nuclei segmentations (above mean)
+  elongated_nuclei:
+    Nuclei_AreaShape_Eccentricity: 2
+  # find large nuclei segmentations (above mean) and low formfactor
+  large_nuclei:
+    Nuclei_AreaShape_Area: 2
+    Nuclei_AreaShape_FormFactor: -2
