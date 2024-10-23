@@ -1,5 +1,6 @@
 # CytoDataFrame
 
+![PyPI - Version](https://img.shields.io/pypi/v/cytodataframe)
 [![Build Status](https://github.com/WayScience/CytoDataFrame/actions/workflows/run-tests.yml/badge.svg?branch=main)](https://github.com/WayScience/CytoDataFrame/actions/workflows/run-tests.yml?query=branch%3Amain)
 ![Coverage Status](https://raw.githubusercontent.com/WayScience/CytoDataFrame/main/media/coverage-badge.svg)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
@@ -19,7 +20,10 @@ CytoDataFrame development began within [coSMicQC](https://github.com/WayScience/
 Install CytoDataFrame from source using the following:
 
 ```shell
-# install directly from source
+# install from pypi
+pip install cytodataframe
+
+# or install directly from source
 pip install git+https://github.com/WayScience/CytoDataFrame.git
 ```
 
