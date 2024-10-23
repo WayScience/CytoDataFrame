@@ -3,7 +3,7 @@
 ```{eval-rst}
 
 cytodataframe.frame
---------------
+-------------------
 
 .. automodule:: src.cytodataframe.frame
    :members:
@@ -12,7 +12,7 @@ cytodataframe.frame
    :show-inheritance:
 
 cytodataframe.image
---------------
+-------------------
 
 .. automodule:: src.cytodataframe.image
    :members:

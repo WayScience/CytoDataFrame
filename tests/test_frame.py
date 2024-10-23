@@ -13,7 +13,7 @@ from pyarrow import parquet
 from tests.utils import cytodataframe_image_display_contains_green_pixels
 
 
-def test_CytoDataFrame_with_dataframe(
+def test_cytodataframe_input(
     tmp_path: pathlib.Path,
     basic_outlier_dataframe: pd.DataFrame,
     basic_outlier_csv: str,

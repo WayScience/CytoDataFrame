@@ -33,13 +33,13 @@ jobs:
           mkdir pages
           touch pages/.nojekyll
           cd docs
-          poetry run sphinx-multiversion src build
+          poetry run sphinx-build src build
           # remove any doctrees dirs which aren't needed for publishing
           find ./build -type d -name '.doctrees' -exec rm -rf {} +
           cp -r build/* ../pages/
       - name: Add index redirector to latest docs
         run: |
-          cp docs/redirector.html pages/index.html
+          cp docs/redirector.html pages/redirector.html
       - name: Add media folder to latest docs
         run: |
           cp -r docs/src/media pages/media

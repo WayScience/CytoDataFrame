@@ -1,34 +1,24 @@
-<img height="200" src="https://raw.githubusercontent.com/WayScience/CytoDataFrame/main/media/logo/with-text-for-light-bg.png?raw=true">
+# CytoDataFrame
 
-# Single cell Morphology Quality Control
-
-![PyPI - Version](https://img.shields.io/pypi/v/CytoDataFrame)
 [![Build Status](https://github.com/WayScience/CytoDataFrame/actions/workflows/run-tests.yml/badge.svg?branch=main)](https://github.com/WayScience/CytoDataFrame/actions/workflows/run-tests.yml?query=branch%3Amain)
 ![Coverage Status](https://raw.githubusercontent.com/WayScience/CytoDataFrame/main/media/coverage-badge.svg)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
 
-> 🌠 Navigate the cosmos of single-cell morphology with confidence — CytoDataFrame keeps your data on course!
+![](https://raw.githubusercontent.com/WayScience/coSMicQC/refs/heads/main/docs/presentations/2024-09-18-SBI2-Conference/images/cosmicqc-example-cytodataframe.png)
+_CytoDataFrame extends Pandas functionality to help display single-cell profile data alongside related images._
 
-CytoDataFrame is a Python package to evaluate converted single-cell morphology outputs from CytoTable.
+CytoDataFrame is an advanced in-memory data analysis format designed for single-cell profiling, integrating not only the data profiles but also their corresponding microscopy images and segmentation masks.
+Traditional single-cell profiling often excludes the associated images from analysis, limiting the scope of research.
+CytoDataFrame bridges this gap, offering a purpose-built solution for comprehensive analysis that incorporates both the data and images, empowering more detailed and visual insights in single-cell research.
 
-It can be challenging to get "perfect" single-cell compartment segmentation across large high-throughput screens when performing object detection in CellProfiler (or similar software).
-Technical artifacts can arise during segmentation, leading to issues such as under-segmentation, over-segmentation, or the erroneous segmentation of background noise, smudges, or bright artifacts.
-
-In single-cell analysis, intriguing phenotypes often emerge by examining morphological differences.
-However, technical outliers in the data can obscure these biological insights, compromising the validity of the findings.
-
-By utilizing specific morphological features extracted with CellProfiler, particularly AreaShape features, you can identify technically incorrect segmentations.
-These can then be labeled or removed before further preprocessing steps, such as those performed with pycytominer.
+CytoDataFrame development began within [coSMicQC](https://github.com/WayScience/coSMicQC) - a single-cell profile quality control package.
 
 ## Installation
 
-Install CytoDataFrame from [PyPI](https://pypi.org/project/CytoDataFrame/) or from source:
+Install CytoDataFrame from source using the following:
 
 ```shell
-# install from pypi
-pip install CytoDataFrame
-
 # install directly from source
 pip install git+https://github.com/WayScience/CytoDataFrame.git
 ```
@@ -39,6 +29,7 @@ Please see our [contributing](https://WayScience.github.io/CytoDataFrame/main/co
 
 ## References
 
+- [coSMicQC](https://github.com/WayScience/coSMicQC)
 - [pycytominer](https://github.com/cytomining/pycytominer)
 - [CellProfiler](https://github.com/CellProfiler/CellProfiler)
 - [CytoTable](https://github.com/cytomining/CytoTable)

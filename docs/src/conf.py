@@ -13,8 +13,6 @@
 import pathlib
 import sys
 
-from dunamai import Version
-
 basedir = str(pathlib.Path(__file__).parent.parent.parent.resolve())
 
 sys.path.insert(0, basedir)
@@ -43,15 +41,6 @@ extensions = [
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
-html_sidebars = {
-    "**": [
-        "searchbox.html",
-        "globaltoc.html",
-        "relations.html",
-        "versioning.html",
-    ],
-}
-
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
@@ -61,7 +50,34 @@ exclude_patterns = []  # type: ignore
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = "sphinx_wagtail_theme"
+html_theme = "pydata_sphinx_theme"
+
+html_theme_options = {
+    "external_links": [
+        {
+            "url": "https://github.com/WayScience/coSMicQC",
+            "name": "coSMicQC",
+        },
+    ],
+    "header_links_before_dropdown": 5,
+    "icon_links": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/WayScience/CytoDataFrame",
+            "icon": "fa-brands fa-github",
+        },
+    ],
+    "logo": {"text": "CytoDataFrame"},
+    "use_edit_page_button": False,
+    "show_toc_level": 1,
+    "navbar_align": "left",
+    "navbar_center": ["navbar-nav"],
+    "footer_start": ["copyright"],
+    "footer_center": ["sphinx-version"],
+    "secondary_sidebar_items": {
+        "**/*": ["page-toc", "edit-this-page", "sourcelink"],
+    },
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -70,22 +86,6 @@ html_static_path = ["_static"]
 html_css_files = ["custom.css"]
 
 # set theme options
-html_theme_options = {
-    "project_name": "coSMicQC",
-    "logo": "just-icon.png",
-    "header_links": "<span class='fab fa-github'></span> GitHub Repository|https://github.com/WayScience/coSMicQC",
-    "logo_alt": "coSMicQC logo",
-    "logo_height": 59,
-    "logo_url": "https://wayscience.github.io/coSMicQC",
-    "logo_width": 45,
-    "github_url": "https://github.com/WayScience/coSMicQC/tree/main/docs/src",
-    "footer_links": ",".join(
-        [
-            "Way Lab|https://www.waysciencelab.com/",
-            "coSMicQC GitHub Repository|https://github.com/WayScience/coSMicQC",
-        ]
-    ),
-}
 
 # Options for myst-nb
 # turn off notebook execution for docs builds
@@ -98,22 +98,3 @@ autodoc_preserve_defaults = True
 
 # enable anchor creation
 myst_heading_anchors = 3
-
-# sphinx-multiversion configuration
-# latest version reference
-smv_latest_version = f"v{Version.from_git().base}"
-
-# only include tags which match semver standards (e.g. v0.0.0)
-smv_tag_whitelist = r"^v\d+\.\d+\.\d+$"
-
-# Pattern for released versions
-smv_released_pattern = r"^tags/v\d+\.\d+\.\d+$"
-
-# Format for versioned output directories inside the build directory
-smv_outputdir_format = "{ref.name}"
-
-# Whitelist pattern for branches (set to None to ignore all branches)
-smv_branch_whitelist = r"main"
-
-# Whitelist pattern for remotes (set to None to use local branches only)
-smv_remote_whitelist = None
