@@ -6,13 +6,14 @@ https://docs.pytest.org/en/7.1.x/explanation/fixtures.html
 
 import pathlib
 
-import cytodataframe
 import numpy as np
 import pandas as pd
 import plotly.colors as pc
 import pytest
 import skimage
 from PIL import Image
+
+import cytodataframe
 
 
 @pytest.fixture(name="cytotable_CFReT_data_df")

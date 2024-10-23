@@ -7,9 +7,9 @@ import pathlib
 import cosmicqc
 import pandas as pd
 import plotly
-from cytodataframe.frame import CytoDataFrame
 from pyarrow import parquet
 
+from cytodataframe.frame import CytoDataFrame
 from tests.utils import cytodataframe_image_display_contains_green_pixels
 
 

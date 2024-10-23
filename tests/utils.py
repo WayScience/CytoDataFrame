@@ -9,8 +9,9 @@ from io import BytesIO
 from typing import List, Tuple
 
 import numpy as np
-from cytodataframe import CytoDataFrame
 from PIL import Image
+
+from cytodataframe import CytoDataFrame
 
 
 def run_cli_command(command: str) -> Tuple[str, str, int]:

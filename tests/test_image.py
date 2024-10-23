@@ -2,8 +2,9 @@
 Tests cosmicqc image module
 """
 
-from cytodataframe.image import adjust_image_brightness, is_image_too_dark
 from PIL import Image
+
+from cytodataframe.image import adjust_image_brightness, is_image_too_dark
 
 
 def test_is_image_too_dark_with_dark_image(fixture_dark_image: Image):
