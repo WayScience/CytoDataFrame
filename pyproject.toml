@@ -114,6 +114,11 @@ lint.per-file-ignores."__init__.py" = [ "E402", "F401" ]
 # ignore typing rules for tests
 lint.per-file-ignores."tests/*" = [ "ANN201", "PLR0913" ]
 
+[tool.pytest.ini_options]
+markers = [
+  "generate_report_image: tests which involve the creation of report images.",
+]
+
 [tool.coverage.run]
 # settings to avoid errors with cv2 and coverage
 # see here for more: https://github.com/nedbat/coveragepy/issues/1653

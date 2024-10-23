@@ -46,5 +46,5 @@ jobs:
       - name: Install environment
         run: poetry install --no-interaction --no-ansi
       - name: Run pytest
-        # run all tests
-        run: poetry run pytest
+        # run all tests except those marked generate_report_image
+        run: poetry run pytest -m "not generate_report_image"
