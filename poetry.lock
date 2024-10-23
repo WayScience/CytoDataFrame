@@ -935,6 +935,31 @@ test = ["Pillow", "contourpy[test-no-images]", "matplotlib"]
 test-no-images = ["pytest", "pytest-cov", "pytest-rerunfailures", "pytest-xdist", "wurlitzer"]
 
 [[package]]
+name = "cosmicqc"
+version = "0.0.11"
+description = "coSMicQC is a software tool for single-cell quality control of morphology datasets."
+optional = false
+python-versions = "<3.13,>=3.9"
+files = [
+    {file = "cosmicqc-0.0.11-py3-none-any.whl", hash = "sha256:d7cd4c6803a399a0b92008348e0d233496e08c03d623bd5524db3cc9a53af19b"},
+    {file = "cosmicqc-0.0.11.tar.gz", hash = "sha256:74506f85b7935e6d1e1c221152a6c26a86b9772e5546dbb44689b109b75265ce"},
+]
+
+[package.dependencies]
+fire = ">=0.6.0,<0.7.0"
+ipython = ">=8.12.3,<9.0.0"
+jinja2 = ">=3.1.4,<4.0.0"
+kaleido = "0.2.1"
+opencv-python = ">=4.10.0.84,<5.0.0.0"
+pandas = {version = ">=2.2.2,<3.0.0", markers = "python_version >= \"3.9\""}
+plotly = ">=5.22.0,<6.0.0"
+pyarrow = ">=16.0.0,<17.0.0"
+pywavelets = {version = ">1.4.1", markers = "python_version >= \"3.9\""}
+pyyaml = ">=6.0.1,<7.0.0"
+scikit-image = {version = ">0.19.3", markers = "python_version >= \"3.9\""}
+scipy = {version = ">=1.13.0,<2.0.0", markers = "python_version >= \"3.9\""}
+
+[[package]]
 name = "coverage"
 version = "7.6.0"
 description = "Code coverage measurement for Python"
@@ -5834,4 +5859,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "4697282934767eae99d9a96749de36744b561a45a07a040608607516e1118c54"
+content-hash = "f3f3612097cc4d49bc6ed67f74d31bbf0b681e5939a668efc25d54b3fefefb5c"

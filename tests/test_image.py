@@ -2,7 +2,7 @@
 Tests cosmicqc image module
 """
 
-from cosmicqc.image import adjust_image_brightness, is_image_too_dark
+from cytodataframe.image import adjust_image_brightness, is_image_too_dark
 from PIL import Image
 
 

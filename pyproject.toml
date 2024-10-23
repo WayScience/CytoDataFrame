@@ -47,6 +47,7 @@ pywavelets = [
 ]
 # used for image modifications in cytodataframe
 opencv-python = "^4.10.0.84"
+cosmicqc = "^0.0.11"
 
 [tool.poetry.group.dev.dependencies]
 # provides testing capabilities for project
@@ -69,7 +70,7 @@ isort = "^5.13.2"
 coverage = "^7.6.0"
 # for standardizing various dev tasks
 poethepoet = "^0.27.0"
-# added for preparing data for cosmicqc in examples
+# added for preparing data for CytoDataFrame in examples
 cytotable = "^0.0.10"
 # used to avoid dependency resolution issues during installs
 botocore = ">=1.31.16,<1.31.65 || >=1.32.4,<1.34.35 || >=1.34.41,<1.34.163 || >=1.35.0,<1.35.8"
@@ -77,11 +78,11 @@ botocore = ">=1.31.16,<1.31.65 || >=1.32.4,<1.34.35 || >=1.34.41,<1.34.163 || >=
 hvplot = "^0.10.0"
 # used for visualization options with hvplot
 datashader = "^0.16.3"
-# added for demonstrating results after using cosmicqc
+# added for demonstrating results after using CytoDataFrame
 umap-learn = "^0.5.6"
 # added for compatibility in notebooks with umap-learn dependency tqdm
 ipywidgets = "^8.1.5"
-# added for demonstrating results with cosmicqc
+# added for demonstrating results with CytoDataFrame
 pycytominer = "^1.1.0"
 # added to avoid warnings from datashader implementation
 dask = { version = "^2024.8.0", extras = [ "dataframe" ] }
@@ -105,7 +106,7 @@ dunamai = "^1.22.0"
 sphinx-wagtail-theme = "^6.3.0"
 
 [tool.poetry.scripts]
-cosmicqc = "cosmicqc.cli:cli_analyze"
+CytoDataFrame = "CytoDataFrame.cli:cli_analyze"
 
 [tool.poetry-dynamic-versioning]
 enable = true
@@ -114,7 +115,7 @@ vcs = "git"
 
 # specify where version replacement is performed
 [tool.poetry-dynamic-versioning.substitution]
-files = [ "src/cosmicqc/__init__.py" ]
+files = [ "src/CytoDataFrame/__init__.py" ]
 
 # defines various development tasks
 
@@ -192,6 +193,6 @@ poster-render.shell = """
   quarto render \
   docs/presentations/2024-09-18-SBI2-Conference/poster.qmd
   mkdir docs/src/media
-  mv docs/presentations/2024-09-18-SBI2-Conference/sbi2-2024-cosmicqc-poster.pdf \
+  mv docs/presentations/2024-09-18-SBI2-Conference/sbi2-2024-CytoDataFrame-poster.pdf \
   docs/src/media
 """

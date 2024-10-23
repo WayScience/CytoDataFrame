@@ -6,7 +6,7 @@ https://docs.pytest.org/en/7.1.x/explanation/fixtures.html
 
 import pathlib
 
-import cosmicqc
+import cytodataframe
 import numpy as np
 import pandas as pd
 import plotly.colors as pc
@@ -119,7 +119,7 @@ def fixture_generate_show_report_html_output(cytotable_CFReT_data_df: pd.DataFra
     """
 
     # create outliers dataframe
-    df = cosmicqc.analyze.label_outliers(
+    df = cytodataframe.analyze.label_outliers(
         df=cytotable_CFReT_data_df,
         include_threshold_scores=True,
     )
