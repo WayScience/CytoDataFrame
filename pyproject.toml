@@ -21,7 +21,7 @@ pandas = [
 # used for data ingest and export
 pyarrow = "^16.0.0"
 # used for report generation capabilities
-plotly = "^5.22.0"
+plotly = "^5.24.1"
 # used for plotly dependencies
 kaleido = "0.2.1"
 # used for environment detection
