@@ -35,7 +35,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx_multiversion",
-    "sphinx_wagtail_theme",
+    "pydata_sphinx_theme",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
