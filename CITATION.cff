@@ -1,0 +1,163 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+---
+cff-version: 1.2.0
+title: CytoDataFrame
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: David
+    family-names: Bunten
+    orcid: 'https://orcid.org/0000-0001-6041-3665'
+  - given-names: Jenna
+    family-names: Tomkinson
+    orcid: 'https://orcid.org/0000-0003-2676-5813'
+  - given-names: Gregory
+    family-names: Way
+    orcid: 'https://orcid.org/0000-0002-0503-9348'
+repository-code: 'https://github.com/WayScience/CytoDataFrame'
+abstract: >-
+  An in-memory data analysis format for single-cell profiles alongside their corresponding images and segmentation masks.
+keywords:
+  - python
+  - single-cell-analysis
+  - profiling
+  - dataframes
+  - data-analysis
+  - way-lab
+license: BSD-3-Clause
+references:
+  - authors:
+      - name: "Way Lab CFReT_data Team"
+    date-accessed: "2024-05-13"
+    title: Way Lab CFReT_data CytoTable Data
+    type: data
+    repository-code: "https://github.com/WayScience/CFReT_data"
+    url: "https://github.com/WayScience/CFReT_data/blob/main/3.process_cfret_features/data/converted_profiles/localhost231120090001_converted.parquet"
+    scope: "localhost231120090001_converted.parquet"
+    notes: >-
+      Data from CFReT_data project is used to help validate
+      expected results. Data is generated from CellProfiler
+      and CytoTable.
+    identifiers:
+      - description: "Github Link with Contributors"
+        type: url
+        value: "https://github.com/WayScience/CFReT_data/graphs/contributors"
+  - authors:
+      - name: "Way Lab NF1_cellpainting_data Team"
+    date-accessed: "2024-06-28"
+    title: Way Lab NF1_cellpainting_data CytoTable Data
+    type: data
+    repository-code: "https://github.com/WayScience/nf1_cellpainting_data"
+    notes: >-
+      Data from NF1_cellpainting_data project is used to help validate
+      expected results. Data is generated from CellProfiler
+      and CytoTable. We use the following files from the repository:
+      - "Plate_2_nf1_analysis.sqlite"
+      - "Plate_2.parquet"
+    identifiers:
+      - description: "Github Link with Contributors"
+        type: url
+        value: "https://github.com/WayScience/nf1_cellpainting_data/graphs/contributors"
+  - title: >-
+      Plate 2 (Cell Painting images from Plate 2 for NF1_cellpainting_data project)
+    type: data
+    url: https://figshare.com/articles/dataset/Plate_2/22233700
+    notes: >-
+      Image data for related NF1_cellpainting_data parquet sqlite.
+    authors:
+    - family-names: Tomkinson
+      given-names: Jenna
+    - family-names: Mattson-Hoss
+      given-names: Michelle
+    - family-names: Sarnoff
+      given-names: Herb
+    - family-names: Way
+      given-names: Gregory
+    date-published: "2023-04-12"
+    identifiers:
+    - type: doi
+      value: 10.6084/m9.figshare.22233700.v4
+  - authors:
+      - name: "Way Lab and Alexander Lab Nuclear Speckles Collaboration"
+    date-accessed: "2024-09-04"
+    title: Way Lab and Alexander Lab Nuclear Speckles Collaboration Data
+    type: data
+    repository-code: https://github.com/WayScience/nuclear_speckle_image_profiling
+    notes: >-
+      Data from a collaborative project focusing on nuclear speckles
+      with the Way Lab and Alexander Lab s used to help validate
+      expected results. Parquet data is generated from CellProfiler
+      and CytoTable. Images courtesy of Katherine Alexander
+      and the Alexander Lab.
+    identifiers:
+      - description: "Github Link with Contributors"
+        type: url
+        value: "https://github.com/WayScience/nuclear_speckle_image_profiling/graphs/contributors"
+  - authors:
+      - family-names: Chandrasekaran
+        given-names: Srinivas Niranj
+      - family-names: Cimini
+        given-names: Beth A.
+      - family-names: Goodale
+        given-names: Amy
+      - family-names: Miller
+        given-names: Lisa
+      - family-names: Kost-Alimova
+        given-names: Maria
+      - family-names: Jamali
+        given-names: Nasim
+      - family-names: Doench
+        given-names: John G.
+      - family-names: Fritchman
+        given-names: Briana
+      - family-names: Skepner
+        given-names: Adam
+      - family-names: Melanson
+        given-names: Michelle
+      - family-names: Kalinin
+        given-names: Alexandr A.
+      - family-names: Arevalo
+        given-names: John
+      - family-names: Haghighi
+        given-names: Marzieh
+      - family-names: Caicedo
+        given-names: Juan C.
+      - family-names: Kuhn
+        given-names: Daniel
+      - family-names: Hernandez
+        given-names: Desiree
+      - family-names: Berstler
+        given-names: James
+      - family-names: Shafqat-Abbasi
+        given-names: Hamdah
+      - family-names: Root
+        given-names: David E.
+      - family-names: Swalley
+        given-names: Susanne E.
+      - family-names: Garg
+        given-names: Sakshi
+      - family-names: Singh
+        given-names: Shantanu
+      - family-names: Carpenter
+        given-names: Anne E.
+    date-accessed: "2024-08-21"
+    title: >-
+      Three million images and morphological profiles of cells treated with matched chemical and genetic perturbations
+    type: article
+    issn: 1548-7105
+    issue: 6
+    journal: Nature Methods
+    pages: 1114-1121
+    volume: 21
+    url: https://doi.org/10.1038/s41592-024-02241-6
+    date-published: "2024-06-01"
+    identifiers:
+      - type: doi
+        value: 10.1038/s41592-024-02241-6
+    notes: >-
+      JUMP (cpg0000-jump-pilot) was used to help demonstrate CytoDataFrame performance
+      with large data. See here for more information:
+      https://github.com/broadinstitute/cellpainting-gallery
