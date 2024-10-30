@@ -57,7 +57,7 @@ sphinx = "^7.0.0"
 # used for rendering markdown through sphinx
 myst-parser = "^3.0.0"
 # used for rendering notebooks through myst parser
-myst-nb = "^1.1.1"
+myst-nb = "^1.1.2"
 # used for extension sphinx-multiversion and to fix git-based challenges with default branch handling
 sphinx-multiversion = { git = "https://github.com/J-RN/sphinx-multiversion", rev = "a77f0c862dace3a62c18fc866da60ef7dde3873d" }
 # used for gathering version data for docsite
