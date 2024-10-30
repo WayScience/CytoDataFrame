@@ -43,7 +43,7 @@ cosmicqc = "^0.0.11"
 
 [tool.poetry.group.dev.dependencies]
 # provides testing capabilities for project
-pytest = "^8.2.0"
+pytest = "^8.3.3"
 # used for report html export to image for tests
 html2image = "^2.0.5"
 # used for test data generation
