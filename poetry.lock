@@ -624,18 +624,18 @@ test = ["objgraph", "psutil"]
 
 [[package]]
 name = "html2image"
-version = "2.0.4.3"
+version = "2.0.5"
 description = "Package acting as a wrapper around the headless mode of existing web browsers to generate images from URLs and from HTML+CSS strings or files."
 optional = false
-python-versions = ">=3.6,<4.0"
+python-versions = "<4.0,>=3.6"
 files = [
-    {file = "html2image-2.0.4.3-py3-none-any.whl", hash = "sha256:e39bc1be8cb39bd36a1b9412d22f5db88d56e762f9ad3461124fa05fa7982945"},
-    {file = "html2image-2.0.4.3.tar.gz", hash = "sha256:878e69122eabf8263415784888c4366f04a8b301516fc5d13b9e0acf8db591e7"},
+    {file = "html2image-2.0.5-py3-none-any.whl", hash = "sha256:71593b6b1e100a585201833656cc7446ce1d2d5c7ec101b507c5c2b71bca6ecc"},
+    {file = "html2image-2.0.5.tar.gz", hash = "sha256:8d3cf5ee805647d1fb21442137349b3ab0e352b4cac7e4280e2a0f841466e87c"},
 ]
 
 [package.dependencies]
 requests = "*"
-websocket-client = ">=1.0.0,<2.0.0"
+websocket-client = "==1.*"
 
 [[package]]
 name = "idna"
@@ -2711,4 +2711,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "7bf0a68da199cec360a9a70580fb005ea005403f32f4955e58fc673e7d9fa3d9"
+content-hash = "beddcc9207e08c93c4e1af8aef0068e9c9f680d640b520de9c9af3f445a79e45"

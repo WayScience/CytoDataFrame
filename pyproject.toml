@@ -45,7 +45,7 @@ cosmicqc = "^0.0.11"
 # provides testing capabilities for project
 pytest = "^8.2.0"
 # used for report html export to image for tests
-html2image = "^2.0.4.3"
+html2image = "^2.0.5"
 # used for test data generation
 sqlalchemy = ">=1.3.6,<2"
 # added to generate test coverage reports
