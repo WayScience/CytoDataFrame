@@ -127,4 +127,3 @@ omit = [
 
 [tool.bandit]
 exclude_dirs = [ "tests" ]
-
