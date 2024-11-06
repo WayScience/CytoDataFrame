@@ -712,9 +712,9 @@ class CytoDataFrame(pd.DataFrame):
             # Get the PNG byte data
             png_bytes = png_bytes_io.getvalue()
 
-        except (FileNotFoundError, ValueError):
+        except (FileNotFoundError, ValueError) as exc:
             # return the raw data value if we run into an exception of some kind
-            print("Unable to process image from {candidate_path}")
+            print(f"Unable to process image from {candidate_path} due to {exc}")
             return data_value
 
         return (
