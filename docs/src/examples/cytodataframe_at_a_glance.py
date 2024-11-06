@@ -14,9 +14,12 @@
 
 # # CytoDataFrame at a Glance
 #
-# This notebook demonstrates various capabilities of [CytoDataFrame](https://github.com/WayScience/CytoDataFrame) using examples.
+# This notebook demonstrates various capabilities of
+# [CytoDataFrame](https://github.com/WayScience/CytoDataFrame) using examples.
 #
-# CytoDataFrame is intended to provide you a Pandas-like DataFrame experience which is enhanced with single-cell visual information which can be viewed directly in a Jupyter notebook.
+# CytoDataFrame is intended to provide you a Pandas-like
+# DataFrame experience which is enhanced with single-cell
+# visual information which can be viewed directly in a Jupyter notebook.
 
 # +
 from cytodataframe.frame import CytoDataFrame
@@ -39,12 +42,10 @@ CytoDataFrame(
         "Image_FileName_OrigDNA",
         "Image_FileName_OrigRNA",
     ]
-][
-    :3
-]
+][:3]
 
 # %%time
-# view JUMP plate BR00117006 with images and overlayed outlines for segmentation
+# view JUMP plate BR00117006 with images and overlaid outlines for segmentation
 CytoDataFrame(
     data=f"{jump_data_path}/BR00117006_shrunken.parquet",
     data_context_dir=f"{jump_data_path}/images/orig",
@@ -57,9 +58,7 @@ CytoDataFrame(
         "Image_FileName_OrigDNA",
         "Image_FileName_OrigRNA",
     ]
-][
-    :3
-]
+][:3]
 
 
 # %%time
@@ -75,12 +74,10 @@ CytoDataFrame(
         "Image_FileName_RFP",
         "Image_FileName_DAPI",
     ]
-][
-    :3
-]
+][:3]
 
 # %%time
-# view NF1 Cell Painting data with images and overlayed outlines from masks
+# view NF1 Cell Painting data with images and overlaid outlines from masks
 CytoDataFrame(
     data=f"{nf1_cellpainting_path}/Plate_2_with_image_data_shrunken.parquet",
     data_context_dir=f"{nf1_cellpainting_path}/Plate_2_images",
@@ -93,12 +90,10 @@ CytoDataFrame(
         "Image_FileName_RFP",
         "Image_FileName_DAPI",
     ]
-][
-    :3
-]
+][:3]
 
 # %%time
-# view nuclear speckles data with images and overlayed outlines from masks
+# view nuclear speckles data with images and overlaid outlines from masks
 CytoDataFrame(
     data=f"{nuclear_speckles_path}/test_slide1_converted.parquet",
     data_context_dir=f"{nuclear_speckles_path}/images/plate1",
@@ -111,6 +106,4 @@ CytoDataFrame(
         "Image_FileName_DAPI",
         "Image_FileName_GOLD",
     ]
-][
-    :3
-]
+][:3]
