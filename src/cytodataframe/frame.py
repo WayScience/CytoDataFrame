@@ -608,7 +608,7 @@ class CytoDataFrame(pd.DataFrame):
         ]
 
     @staticmethod
-    def draw_outline_on_image(actual_image_path: str, mask_image_path: str) -> Image:
+    def draw_outline_on_image_from_mask(actual_image_path: str, mask_image_path: str) -> Image:
         """
         Draws outlines on a TIFF image based on a mask image and returns
         the combined result.
@@ -691,7 +691,7 @@ class CytoDataFrame(pd.DataFrame):
                     )
                 )
             ):
-                pil_image = self.draw_outline_on_image(
+                pil_image = self.draw_outline_on_image_from_mask(
                     actual_image_path=candidate_path,
                     mask_image_path=matching_mask_file[0],
                 )
