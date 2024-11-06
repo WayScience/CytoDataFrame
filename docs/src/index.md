@@ -12,6 +12,7 @@ relative-images:
 caption: 'Contents:'
 maxdepth: 3
 ---
+examples
 python-api
 presentations
 contributing

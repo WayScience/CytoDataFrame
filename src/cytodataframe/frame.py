@@ -621,13 +621,13 @@ class CytoDataFrame(pd.DataFrame):
         actual_image_path: str, outline_image_path: str
     ) -> Image:
         """
-        Draws outlines on a TIFF image based on an outline image and returns
+        Draws green outlines on a TIFF image based on an outline image and returns
         the combined result.
 
         This method takes the path to a TIFF image and an outline image (where
-        outlines are non-black and the background is black) and overlays the outlines
-        on the TIFF image. The resulting image, which combines the TIFF image with
-        the outline, is returned.
+        outlines are non-black and the background is black) and overlays the green
+        outlines on the TIFF image. The resulting image, which combines the TIFF
+        image with the green outline, is returned.
 
         Args:
             actual_image_path (str):
@@ -638,7 +638,7 @@ class CytoDataFrame(pd.DataFrame):
         Returns:
             PIL.Image.Image:
                 A PIL Image object that is the result of
-                combining the TIFF image with the outline.
+                combining the TIFF image with the green outline.
 
         Raises:
             FileNotFoundError:
@@ -664,11 +664,16 @@ class CytoDataFrame(pd.DataFrame):
         outline_array = np.array(outline_image)
         non_black_mask = np.any(outline_array[:, :, :3] != 0, axis=-1)
 
-        # Apply the mask to make black areas fully transparent
+        # Change non-black pixels to green (RGB: 0, 255, 0)
+        outline_array[non_black_mask, 0] = 0  # Red channel set to 0
+        outline_array[non_black_mask, 1] = 255  # Green channel set to 255
+        outline_array[non_black_mask, 2] = 0  # Blue channel set to 0
+
+        # Ensure the alpha channel stays as it is
         outline_array[:, :, 3] = np.where(non_black_mask, 255, 0)
         outline_image = Image.fromarray(outline_array)
 
-        # Combine the TIFF image with the outline image
+        # Combine the TIFF image with the green outline image
         return Image.alpha_composite(tiff_image, outline_image)
 
     @staticmethod
