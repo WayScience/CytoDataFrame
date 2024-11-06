@@ -76,10 +76,6 @@ enable = true
 style = "pep440"
 vcs = "git"
 
-[tool.jupytext]
-formats = "ipynb,py:light"
-
-# specify where version replacement is performed
 [tool.poetry-dynamic-versioning.substitution]
 files = [ "src/CytoDataFrame/__init__.py" ]
 
@@ -119,7 +115,7 @@ lint.select = [
 # Ignore `E402` and `F401` (unused imports) in all `__init__.py` files
 lint.per-file-ignores."__init__.py" = [ "E402", "F401" ]
 # ignore typing rules for tests
-lint.per-file-ignores."tests/*" = [ "ANN201", "PLR0913" ]
+lint.per-file-ignores."tests/*" = [ "ANN201", "PLR0913", "PLR2004" ]
 
 [tool.pytest.ini_options]
 markers = [
@@ -133,6 +129,11 @@ omit = [
   "config.py",
   "config-3.py",
 ]
+
+[tool.jupytext]
+formats = "ipynb,py:light"
+
+# specify where version replacement is performed
 
 [tool.bandit]
 exclude_dirs = [ "tests" ]
