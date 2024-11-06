@@ -40,6 +40,7 @@ pywavelets = [
 opencv-python = "^4.10.0.84"
 # used for report visualizations from within cytodataframe
 cosmicqc = "^0.0.11"
+imagecodecs = "^2024.9.22"
 
 [tool.poetry.group.dev.dependencies]
 # provides testing capabilities for project
@@ -50,6 +51,11 @@ html2image = "^2.0.5"
 sqlalchemy = ">=1.3.6,<3"
 # added to generate test coverage reports
 coverage = "^7.6.0"
+jupyterlab = "^4.3.0"
+jupytext = "^1.16.4"
+black = "^24.10.0"
+isort = "^5.13.2"
+jupyterlab-code-formatter = "^3.0.2"
 
 [tool.poetry.group.docs.dependencies]
 # used for rendering docs into docsite
@@ -69,6 +75,9 @@ pydata-sphinx-theme = "^0.16.0"
 enable = true
 style = "pep440"
 vcs = "git"
+
+[tool.jupytext]
+formats = "ipynb,py:light"
 
 # specify where version replacement is performed
 [tool.poetry-dynamic-versioning.substitution]
