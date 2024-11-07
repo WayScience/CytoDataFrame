@@ -38,8 +38,6 @@ pywavelets = [
 ]
 # used for image modifications in cytodataframe
 opencv-python = "^4.10.0.84"
-# used for report visualizations from within cytodataframe
-cosmicqc = "^0.0.11"
 imagecodecs = "^2024.9.22"
 
 [tool.poetry.group.dev.dependencies]
