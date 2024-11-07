@@ -66,12 +66,13 @@ class CytoDataFrame(pd.DataFrame):
 
     _metadata: ClassVar = ["_custom_attrs"]
 
-    def __init__(  # noqa: PLR0912
+    def __init__(
         self: CytoDataFrame_type,
         data: Union[CytoDataFrame_type, pd.DataFrame, str, pathlib.Path],
         data_context_dir: Optional[str] = None,
         data_bounding_box: Optional[pd.DataFrame] = None,
         data_mask_context_dir: Optional[str] = None,
+        data_outline_context_dir: Optional[str] = None,
         **kwargs: Dict[str, Any],
     ) -> None:
         """
@@ -86,22 +87,25 @@ class CytoDataFrame(pd.DataFrame):
                 Bounding box data for the DataFrame images.
             data_mask_context_dir: Optional[str]:
                 Directory context for the mask data for images.
+            data_outline_context_dir: Optional[str]:
+                Directory context for the outline data for images.
             **kwargs:
                 Additional keyword arguments to pass to the pandas read functions.
         """
 
         self._custom_attrs = {
             "data_source": None,
-            "data_context_dir": None,
+            "data_context_dir": data_context_dir
+            if data_context_dir is not None
+            else None,
             "data_bounding_box": None,
-            "data_mask_context_dir": None,
+            "data_mask_context_dir": data_mask_context_dir
+            if data_mask_context_dir is not None
+            else None,
+            "data_outline_context_dir": data_outline_context_dir
+            if data_outline_context_dir is not None
+            else None,
         }
-
-        if data_context_dir is not None:
-            self._custom_attrs["data_context_dir"] = data_context_dir
-
-        if data_mask_context_dir is not None:
-            self._custom_attrs["data_mask_context_dir"] = data_mask_context_dir
 
         if isinstance(data, CytoDataFrame):
             self._custom_attrs["data_source"] = data._custom_attrs["data_source"]
@@ -110,6 +114,9 @@ class CytoDataFrame(pd.DataFrame):
             ]
             self._custom_attrs["data_mask_context_dir"] = data._custom_attrs[
                 "data_mask_context_dir"
+            ]
+            self._custom_attrs["data_outline_context_dir"] = data._custom_attrs[
+                "data_outline_context_dir"
             ]
             super().__init__(data)
         elif isinstance(data, (pd.DataFrame, pd.Series)):
@@ -173,6 +180,7 @@ class CytoDataFrame(pd.DataFrame):
                 data_context_dir=self._custom_attrs["data_context_dir"],
                 data_bounding_box=self._custom_attrs["data_bounding_box"],
                 data_mask_context_dir=self._custom_attrs["data_mask_context_dir"],
+                data_outline_context_dir=self._custom_attrs["data_outline_context_dir"],
             )
 
     def _wrap_method(
@@ -207,6 +215,7 @@ class CytoDataFrame(pd.DataFrame):
                 data_context_dir=self._custom_attrs["data_context_dir"],
                 data_bounding_box=self._custom_attrs["data_bounding_box"],
                 data_mask_context_dir=self._custom_attrs["data_mask_context_dir"],
+                data_outline_context_dir=self._custom_attrs["data_outline_context_dir"],
             )
         return result
 
@@ -608,7 +617,69 @@ class CytoDataFrame(pd.DataFrame):
         ]
 
     @staticmethod
-    def draw_outline_on_image(actual_image_path: str, mask_image_path: str) -> Image:
+    def draw_outline_on_image_from_outline(
+        actual_image_path: str, outline_image_path: str
+    ) -> Image:
+        """
+        Draws green outlines on a TIFF image based on an outline image and returns
+        the combined result.
+
+        This method takes the path to a TIFF image and an outline image (where
+        outlines are non-black and the background is black) and overlays the green
+        outlines on the TIFF image. The resulting image, which combines the TIFF
+        image with the green outline, is returned.
+
+        Args:
+            actual_image_path (str):
+                Path to the TIFF image file.
+            outline_image_path (str):
+                Path to the outline image file.
+
+        Returns:
+            PIL.Image.Image:
+                A PIL Image object that is the result of
+                combining the TIFF image with the green outline.
+
+        Raises:
+            FileNotFoundError:
+                If the specified image or outline file does not exist.
+            ValueError:
+                If the images are not in compatible formats or sizes.
+        """
+        # Load the TIFF image
+        tiff_image_array = skimage.io.imread(actual_image_path)
+
+        # Check if the image is 16-bit and grayscale
+        if tiff_image_array.dtype == np.uint16:
+            # Normalize the image to 8-bit for display purposes
+            tiff_image_array = (tiff_image_array / 256).astype(np.uint8)
+
+        # Convert to PIL Image and then to 'RGBA'
+        tiff_image = Image.fromarray(tiff_image_array).convert("RGBA")
+
+        # Load the outline image
+        outline_image = Image.open(outline_image_path).convert("RGBA")
+
+        # Create a mask for non-black areas in the outline image
+        outline_array = np.array(outline_image)
+        non_black_mask = np.any(outline_array[:, :, :3] != 0, axis=-1)
+
+        # Change non-black pixels to green (RGB: 0, 255, 0)
+        outline_array[non_black_mask, 0] = 0  # Red channel set to 0
+        outline_array[non_black_mask, 1] = 255  # Green channel set to 255
+        outline_array[non_black_mask, 2] = 0  # Blue channel set to 0
+
+        # Ensure the alpha channel stays as it is
+        outline_array[:, :, 3] = np.where(non_black_mask, 255, 0)
+        outline_image = Image.fromarray(outline_array)
+
+        # Combine the TIFF image with the green outline image
+        return Image.alpha_composite(tiff_image, outline_image)
+
+    @staticmethod
+    def draw_outline_on_image_from_mask(
+        actual_image_path: str, mask_image_path: str
+    ) -> Image:
         """
         Draws outlines on a TIFF image based on a mask image and returns
         the combined result.
@@ -691,9 +762,21 @@ class CytoDataFrame(pd.DataFrame):
                     )
                 )
             ):
-                pil_image = self.draw_outline_on_image(
+                pil_image = self.draw_outline_on_image_from_mask(
                     actual_image_path=candidate_path,
                     mask_image_path=matching_mask_file[0],
+                )
+
+            elif self._custom_attrs["data_outline_context_dir"] is not None and (
+                matching_outline_file := list(
+                    pathlib.Path(self._custom_attrs["data_outline_context_dir"]).rglob(
+                        f"{pathlib.Path(candidate_path).stem}*"
+                    )
+                )
+            ):
+                pil_image = self.draw_outline_on_image_from_outline(
+                    actual_image_path=candidate_path,
+                    outline_image_path=matching_outline_file[0],
                 )
 
             else:
@@ -712,9 +795,9 @@ class CytoDataFrame(pd.DataFrame):
             # Get the PNG byte data
             png_bytes = png_bytes_io.getvalue()
 
-        except (FileNotFoundError, ValueError):
+        except (FileNotFoundError, ValueError) as exc:
             # return the raw data value if we run into an exception of some kind
-            print("Unable to process image from {candidate_path}")
+            print(f"Unable to process image from {candidate_path} due to {exc}")
             return data_value
 
         return (

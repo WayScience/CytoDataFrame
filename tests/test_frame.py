@@ -3,8 +3,10 @@ Tests cosmicqc CytoDataFrame module
 """
 
 import pathlib
+from io import BytesIO
 
 import cosmicqc
+import numpy as np
 import pandas as pd
 import plotly
 import plotly.colors as pc
@@ -12,7 +14,11 @@ import pytest
 from pyarrow import parquet
 
 from cytodataframe.frame import CytoDataFrame
-from tests.utils import cytodataframe_image_display_contains_green_pixels
+from tests.utils import (
+    create_sample_image,
+    create_sample_outline,
+    cytodataframe_image_display_contains_green_pixels,
+)
 
 
 def test_cytodataframe_input(
@@ -191,3 +197,137 @@ def fixture_generate_show_report_html_output(cytotable_CFReT_data_df: pd.DataFra
     )
 
     return report_path
+
+
+def test_overlay_with_valid_images():
+    """
+    Tests the `draw_outline_on_image_from_outline` function
+    with valid images: a base image and an outline image.
+
+    Verifies that the resulting image contains the correct
+    outline color in the expected positions.
+    """
+    # Create a sample base image (black background)
+    actual_image = create_sample_image(200, 200, (0, 0, 0, 255))  # Black image
+    outline_image = create_sample_outline(200, 200, (255, 0, 0))  # Red outline
+
+    # Save images to bytes buffer (to mimic files)
+    actual_image_fp = BytesIO()
+    actual_image.save(actual_image_fp, format="PNG")
+    actual_image_fp.seek(0)
+
+    outline_image_fp = BytesIO()
+    outline_image.save(outline_image_fp, format="PNG")
+    outline_image_fp.seek(0)
+
+    # Test the function
+    result_image = CytoDataFrame.draw_outline_on_image_from_outline(
+        actual_image_fp, outline_image_fp
+    )
+
+    # Convert result to numpy array for comparison
+    result_array = np.array(result_image)
+
+    # Assert that the result image has the outline color
+    # (e.g., red) in the expected position
+    assert np.any(
+        result_array[10:100, 10:100, :3] == [255, 0, 0]
+    )  # Check for red outline
+    assert np.all(
+        result_array[0:10, 0:10, :3] == [0, 0, 0]
+    )  # Check for no outline in the black background
+
+
+def test_overlay_with_no_outline():
+    """
+    Tests the `draw_outline_on_image_from_outline` function
+    with an outline image that has no outlines (all black).
+
+    Verifies that the result is the same as the original
+    image when no outlines are provided.
+    """
+    # Create a sample base image
+    actual_image = create_sample_image(200, 200, (0, 0, 255, 255))
+    # Black image with no outline
+    outline_image = create_sample_image(200, 200, (0, 0, 0, 255))
+
+    actual_image_fp = BytesIO()
+    actual_image.save(actual_image_fp, format="PNG")
+    actual_image_fp.seek(0)
+
+    outline_image_fp = BytesIO()
+    outline_image.save(outline_image_fp, format="PNG")
+    outline_image_fp.seek(0)
+
+    # Test the function
+    result_image = CytoDataFrame.draw_outline_on_image_from_outline(
+        actual_image_fp, outline_image_fp
+    )
+
+    # Convert result to numpy array for comparison
+    result_array = np.array(result_image)
+
+    # Assert that the result image is still blue (no outline overlay)
+    assert np.all(result_array[:, :, :3] == [0, 0, 255])
+
+
+def test_overlay_with_transparent_outline():
+    """
+    Tests the `draw_outline_on_image_from_outline` function
+    with a fully transparent outline image.
+
+    Verifies that the result image is unchanged when the
+    outline image is fully transparent.
+    """
+    # Create a sample base image
+    actual_image = create_sample_image(200, 200, (0, 255, 0, 255))
+    # Fully transparent image
+    outline_image = create_sample_image(200, 200, (0, 0, 0, 0))
+
+    actual_image_fp = BytesIO()
+    actual_image.save(actual_image_fp, format="PNG")
+    actual_image_fp.seek(0)
+
+    outline_image_fp = BytesIO()
+    outline_image.save(outline_image_fp, format="PNG")
+    outline_image_fp.seek(0)
+
+    # Test the function
+    result_image = CytoDataFrame.draw_outline_on_image_from_outline(
+        actual_image_fp, outline_image_fp
+    )
+
+    # Convert result to numpy array for comparison
+    result_array = np.array(result_image)
+
+    # Assert that the result image is still green
+    # (transparent outline should not affect the image)
+    assert np.all(result_array[:, :, :3] == [0, 255, 0])
+
+
+def test_invalid_image_path():
+    """
+    Tests the `draw_outline_on_image_from_outline` function
+    when the image path is invalid.
+
+    Verifies that a FileNotFoundError is raised when the
+    specified image does not exist.
+    """
+    with pytest.raises(FileNotFoundError):
+        CytoDataFrame.draw_outline_on_image_from_outline(
+            "invalid_image.png", "valid_outline.png"
+        )
+
+
+def test_invalid_outline_path():
+    """
+    Tests the `draw_outline_on_image_from_outline` function
+    when the outline image path is invalid.
+
+    Verifies that a FileNotFoundError is raised when the
+    specified outline image does not exist.
+    """
+    with pytest.raises(FileNotFoundError):
+        CytoDataFrame.draw_outline_on_image_from_outline(
+            "valid_image.png", "invalid_outline.png"
+        )

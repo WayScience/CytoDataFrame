@@ -5,7 +5,7 @@ Utilities for running pytest tests in CytoDataFrame
 import base64
 import re
 from io import BytesIO
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 from PIL import Image
@@ -75,3 +75,58 @@ def cytodataframe_image_display_contains_green_pixels(
 
     # return true/false if there's at least one greenish pixel in the image
     return np.any(green_pixels)
+
+
+def create_sample_image(
+    width: int, height: int, color: Tuple[int, int, int, int] = (0, 0, 0, 255)
+) -> Image:
+    """
+    Creates a sample RGBA image with the specified dimensions
+    and background color.
+
+    Args:
+        width (int):
+            The width of the image.
+        height (int):
+            The height of the image.
+        color (Tuple[int, int, int, int]):
+            The background color of the image, represented as an
+            RGBA tuple (default is black).
+
+    Returns:
+        PIL.Image.Image:
+            A PIL Image object with the specified color and dimensions.
+    """
+    image = Image.new("RGBA", (width, height), color)
+    return image
+
+
+def create_sample_outline(
+    width: int, height: int, outline_color: Tuple[int, int, int] = (255, 0, 0)
+) -> Image:
+    """
+    Creates a sample outline image with a red outline
+    drawn on a transparent background.
+
+    Args:
+        width (int):
+            The width of the outline image.
+        height (int):
+            The height of the outline image.
+        outline_color (Tuple[int, int, int]):
+            The color of the outline in RGB format (default is red).
+
+    Returns:
+        PIL.Image.Image:
+            A PIL Image object with a red outline on a transparent background.
+    """
+    # Transparent background
+    image = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    # Create a simple outline shape
+    for x in range(10, 100):
+        for y in range(10, 100):
+            # A simple border outline
+            if x == 10 or y == 10 or x == 99 or y == 99:
+                # Red outline
+                image.putpixel((x, y), (*outline_color, 255))
+    return image
