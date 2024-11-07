@@ -5,11 +5,8 @@ Tests cosmicqc CytoDataFrame module
 import pathlib
 from io import BytesIO
 
-import cosmicqc
 import numpy as np
 import pandas as pd
-import plotly
-import plotly.colors as pc
 import pytest
 from pyarrow import parquet
 
@@ -113,33 +110,6 @@ def test_cytodataframe_input(
     pd.testing.assert_frame_equal(copy_sc_df, sc_df)
 
 
-def test_show_report(cytotable_CFReT_data_df: pd.DataFrame):
-    """
-    Used for testing show report capabilities
-    """
-
-    df = cosmicqc.analyze.label_outliers(
-        df=cytotable_CFReT_data_df,
-        include_threshold_scores=True,
-    )
-
-    figures = df.show_report(auto_open=False)
-
-    expected_number_figures = 3
-    assert len(figures) == expected_number_figures
-    assert (
-        next(iter({type(figure) for figure in figures}))
-        == plotly.graph_objs._figure.Figure
-    )
-
-    df.show_report(
-        report_path=(report_path := pathlib.Path("cosmicqc_example_report.html")),
-        auto_open=False,
-    )
-
-    assert report_path.is_file()
-
-
 def test_repr_html(
     cytotable_NF1_data_parquet_shrunken: str,
     cytotable_nuclear_speckles_data_parquet: str,
@@ -169,34 +139,6 @@ def test_repr_html(
             "Image_FileName_GOLD",
         ],
     ), "The nuclear speckles images do not contain green outlines."
-
-
-@pytest.mark.generate_report_image
-def fixture_generate_show_report_html_output(cytotable_CFReT_data_df: pd.DataFrame):
-    """
-    Used for generating report output for use with other tests.
-    """
-
-    # create outliers dataframe
-    df = cosmicqc.analyze.label_outliers(
-        df=cytotable_CFReT_data_df,
-        include_threshold_scores=True,
-    )
-
-    # show a report
-    df.show_report(
-        report_path=(
-            report_path := pathlib.Path(__file__).parent
-            / "data"
-            / "coSMicQC"
-            / "show_report"
-            / "cosmicqc_example_report.html"
-        ),
-        color_palette=pc.qualitative.Dark24[0:2],
-        auto_open=False,
-    )
-
-    return report_path
 
 
 def test_overlay_with_valid_images():
