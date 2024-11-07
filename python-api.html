@@ -483,57 +483,6 @@ information (data context directory and data bounding box).</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="src.cytodataframe.frame.CytoDataFrame.create_figure_group_html">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">create_figure_group_html</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">figures</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Figure</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">report_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/src/cytodataframe/frame.html#CytoDataFrame.create_figure_group_html"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.cytodataframe.frame.CytoDataFrame.create_figure_group_html" title="Link to this definition">#</a></dt>
-<dd><p>Generates an HTML file containing multiple Plotly figures.</p>
-<p>This method takes a list of Plotly figure objects, converts them to HTML,
-and embeds them into a template HTML file. The resulting HTML file is then
-saved to the specified path.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>figures</strong> (<em>List</em><em>[</em><em>plotly.graph_objs._figure.Figure</em><em>]</em>) – A list of Plotly figure objects to be included in the HTML report.</p></li>
-<li><p><strong>report_path</strong> (<em>str</em>) – The file path where the HTML report will be saved.
-Defaults to “cosmicqc_outlier_report.html” when None.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The path to the saved HTML report.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="src.cytodataframe.frame.CytoDataFrame.create_threshold_set_outlier_visualization">
-<span class="sig-name descname"><span class="pre">create_threshold_set_outlier_visualization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold_set_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">col_outlier</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cols_threshold_scores</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color_palette</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Figure</span></span></span><a class="reference internal" href="_modules/src/cytodataframe/frame.html#CytoDataFrame.create_threshold_set_outlier_visualization"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.cytodataframe.frame.CytoDataFrame.create_threshold_set_outlier_visualization" title="Link to this definition">#</a></dt>
-<dd><p>Creates a Plotly figure visualizing the Z-score distributions and outliers
-for a given threshold set.</p>
-<p>This method generates histograms for each Z-score column in the given DataFrame,
-colors them based on outlier status, and overlays them into a single figure.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>df</strong> (<em>pd.DataFrame</em>) – The DataFrame containing the data to be visualized.</p></li>
-<li><p><strong>threshold_set_name</strong> (<em>str</em>) – The name of the threshold set being visualized.</p></li>
-<li><p><strong>col_outlier</strong> (<em>str</em>) – The column name indicating outlier status.</p></li>
-<li><p><strong>cols_threshold_scores</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – A list of column names representing the Z-scores to be visualized.</p></li>
-<li><p><strong>Optional</strong> (<em>color_palette</em>) – Optional list for color palette to use.
-Defaults to use Dark24 color palette from Plotly.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A Plotly figure object containing the visualization.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>plotly.graph_objs._figure.Figure</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="src.cytodataframe.frame.CytoDataFrame.draw_outline_on_image_from_mask">
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">draw_outline_on_image_from_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">actual_image_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask_image_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">&lt;module</span> <span class="pre">'PIL.Image'</span> <span class="pre">from</span> <span class="pre">'/home/runner/.cache/pypoetry/virtualenvs/cytodataframe-wPvlLXoR-py3.11/lib/python3.11/site-packages/PIL/Image.py'&gt;</span></span></span><a class="reference internal" href="_modules/src/cytodataframe/frame.html#CytoDataFrame.draw_outline_on_image_from_mask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.cytodataframe.frame.CytoDataFrame.draw_outline_on_image_from_mask" title="Link to this definition">#</a></dt>
 <dd><p>Draws outlines on a TIFF image based on a mask image and returns
@@ -677,32 +626,6 @@ or scripts).</p>
 <dt class="sig sig-object py" id="src.cytodataframe.frame.CytoDataFrame.process_image_data_as_html_display">
 <span class="sig-name descname"><span class="pre">process_image_data_as_html_display</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounding_box</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/src/cytodataframe/frame.html#CytoDataFrame.process_image_data_as_html_display"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.cytodataframe.frame.CytoDataFrame.process_image_data_as_html_display" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="src.cytodataframe.frame.CytoDataFrame.show_report">
-<span class="sig-name descname"><span class="pre">show_report</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">report_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auto_open</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color_palette</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/src/cytodataframe/frame.html#CytoDataFrame.show_report"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.cytodataframe.frame.CytoDataFrame.show_report" title="Link to this definition">#</a></dt>
-<dd><p>Generates and displays a report based on the current DataFrame’s data
-quality control (DQC) columns.</p>
-<p>This method organizes the DQC columns from the DataFrame, creates
-visualizations for each threshold set, and then either displays the
-visualizations inline (if running in a Jupyter notebook or lab) or
-opens an HTML report in the default web browser.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>report_path</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – The file path where the HTML report should be saved and displayed.
-If <cite>None</cite>, the report will be displayed inline if in a notebook
-or lab environment.</p></li>
-<li><p><strong>auto_open</strong> – bool:
-Whether to automatically open the report.</p></li>
-<li><p><strong>Optional</strong> (<em>color_palette</em>) – Optional list for color palette to use.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the DataFrame does not contain any DQC columns.</p>
-</dd>
-</dl>
-</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="src.cytodataframe.frame.CytoDataFrame.sort_values">
