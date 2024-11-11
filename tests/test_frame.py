@@ -113,6 +113,7 @@ def test_cytodataframe_input(
 def test_repr_html(
     cytotable_NF1_data_parquet_shrunken: str,
     cytotable_nuclear_speckles_data_parquet: str,
+    cytotable_pediatric_cancer_atlas_parquet_parquet: str,
 ):
     """
     Tests how images are rendered through customized repr_html in CytoDataFrame.
@@ -139,6 +140,22 @@ def test_repr_html(
             "Image_FileName_GOLD",
         ],
     ), "The nuclear speckles images do not contain green outlines."
+
+    assert cytodataframe_image_display_contains_green_pixels(
+        frame=CytoDataFrame(
+            data=cytotable_pediatric_cancer_atlas_parquet_parquet,
+            data_context_dir=f"{pathlib.Path(cytotable_pediatric_cancer_atlas_parquet_parquet).parent}/images/orig",
+            data_outline_context_dir=f"{pathlib.Path(cytotable_pediatric_cancer_atlas_parquet_parquet).parent}/images/outlines",
+            segmentation_file_regex={
+                r"CellsOutlines_BR(\d+)_C(\d{2})_\d+\.tiff": r".*ch3.*\.tiff",
+                r"NucleiOutlines_BR(\d+)_C(\d{2})_\d+\.tiff": r".*ch5.*\.tiff",
+            },
+        ),
+        image_cols=[
+            "Image_FileName_OrigAGP",
+            "Image_FileName_OrigDNA",
+        ],
+    ), "The pediatric cancer atlas speckles images do not contain green outlines."
 
 
 def test_overlay_with_valid_images():

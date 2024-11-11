@@ -59,13 +59,14 @@ class CytoDataFrame(pd.DataFrame):
 
     _metadata: ClassVar = ["_custom_attrs"]
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self: CytoDataFrame_type,
         data: Union[CytoDataFrame_type, pd.DataFrame, str, pathlib.Path],
         data_context_dir: Optional[str] = None,
         data_bounding_box: Optional[pd.DataFrame] = None,
         data_mask_context_dir: Optional[str] = None,
         data_outline_context_dir: Optional[str] = None,
+        segmentation_file_regex: Optional[Dict[str, str]] = None,
         **kwargs: Dict[str, Any],
     ) -> None:
         """
@@ -82,22 +83,30 @@ class CytoDataFrame(pd.DataFrame):
                 Directory context for the mask data for images.
             data_outline_context_dir: Optional[str]:
                 Directory context for the outline data for images.
+            segmentation_file_regex: Optional[Dict[str, str]]:
+                A dictionary which includes regex strings for mapping segmentation
+                images (masks or outlines) to unsegmented images.
             **kwargs:
                 Additional keyword arguments to pass to the pandas read functions.
         """
 
         self._custom_attrs = {
             "data_source": None,
-            "data_context_dir": data_context_dir
-            if data_context_dir is not None
-            else None,
+            "data_context_dir": (
+                data_context_dir if data_context_dir is not None else None
+            ),
             "data_bounding_box": None,
-            "data_mask_context_dir": data_mask_context_dir
-            if data_mask_context_dir is not None
-            else None,
-            "data_outline_context_dir": data_outline_context_dir
-            if data_outline_context_dir is not None
-            else None,
+            "data_mask_context_dir": (
+                data_mask_context_dir if data_mask_context_dir is not None else None
+            ),
+            "data_outline_context_dir": (
+                data_outline_context_dir
+                if data_outline_context_dir is not None
+                else None
+            ),
+            "segmentation_file_regex": (
+                segmentation_file_regex if segmentation_file_regex is not None else None
+            ),
         }
 
         if isinstance(data, CytoDataFrame):
@@ -174,6 +183,7 @@ class CytoDataFrame(pd.DataFrame):
                 data_bounding_box=self._custom_attrs["data_bounding_box"],
                 data_mask_context_dir=self._custom_attrs["data_mask_context_dir"],
                 data_outline_context_dir=self._custom_attrs["data_outline_context_dir"],
+                segmentation_file_regex=self._custom_attrs["segmentation_file_regex"],
             )
 
     def _wrap_method(
@@ -209,6 +219,7 @@ class CytoDataFrame(pd.DataFrame):
                 data_bounding_box=self._custom_attrs["data_bounding_box"],
                 data_mask_context_dir=self._custom_attrs["data_mask_context_dir"],
                 data_outline_context_dir=self._custom_attrs["data_outline_context_dir"],
+                segmentation_file_regex=self._custom_attrs["segmentation_file_regex"],
             )
         return result
 
@@ -487,68 +498,172 @@ class CytoDataFrame(pd.DataFrame):
         # Combine the TIFF image with the outline image
         return Image.alpha_composite(tiff_image, outline_image)
 
+    def search_for_mask_or_outline(
+        self: CytoDataFrame_type,
+        data_value: str,
+        pattern_map: dict,
+        file_dir: str,
+        candidate_path: pathlib.Path,
+        mask: bool = True,
+    ) -> Image:
+        """
+        Search for a mask or outline image file based on the
+        provided patterns and apply it to the target image.
+
+        This function attempts to find a mask or outline image
+        for a given data value, either based on a pattern map
+        or by searching the file directory directly. If a mask
+        or outline is found, it is drawn on the target image.
+        If no relevant file is found, the function returns None.
+
+        Args:
+            data_value (str):
+                The value used to match patterns for locating
+                mask or outline files.
+            pattern_map (dict):
+                A dictionary of file patterns and their corresponding
+                original patterns for matching.
+            file_dir (str):
+                The directory where image files are stored.
+            candidate_path (pathlib.Path):
+                The path to the candidate image file to apply
+                the mask or outline to.
+            mask (bool, optional):
+                Whether to search for a mask (True) or an outline
+                (False). Default is True.
+
+        Returns:
+            Image:
+                The target image with the applied mask or outline,
+                or None if no relevant file is found.
+        """
+
+        # Return None if the provided file directory is None
+        if file_dir is None:
+            return None
+
+        # If no pattern map is provided and a matching mask
+        # file is found in the directory, apply the mask to
+        # the image and return the result
+        if pattern_map is None and (
+            matching_mask_file := list(
+                pathlib.Path(file_dir).rglob(f"{pathlib.Path(candidate_path).stem}*")
+            )
+        ):
+            return self.draw_outline_on_image_from_mask(
+                actual_image_path=candidate_path,
+                mask_image_path=matching_mask_file[0],
+            )
+
+        # If no pattern map is provided and no matching mask
+        # is found, return None
+        if pattern_map is None:
+            return None
+
+        # Iterate through the pattern map and search for matching files
+        # based on the data value
+        for file_pattern, original_pattern in pattern_map.items():
+            # Check if the current data value matches the pattern
+            if re.search(original_pattern, data_value):
+                # Find all matching files in the directory
+                matching_files = [
+                    file
+                    for file in pathlib.Path(file_dir).rglob("*")
+                    if re.search(file_pattern, file.name)
+                ]
+                # If matching files are found, apply the mask
+                # or outline based on the 'mask' flag
+                if matching_files:
+                    if mask:
+                        return self.draw_outline_on_image_from_mask(
+                            actual_image_path=candidate_path,
+                            mask_image_path=matching_files[0],
+                        )
+                    else:
+                        return self.draw_outline_on_image_from_outline(
+                            actual_image_path=candidate_path,
+                            outline_image_path=matching_files[0],
+                        )
+
+        # If no matching files are found, return None
+        return None
+
     def process_image_data_as_html_display(
         self: CytoDataFrame_type,
         data_value: Any,  # noqa: ANN401
         bounding_box: Tuple[int, int, int, int],
     ) -> str:
+        """
+        Process the image data based on the provided data value
+        and bounding box, applying masks or outlines where
+        applicable, and return an HTML representation of the
+        cropped image for display.
+
+        Args:
+            data_value (Any):
+                The value to search for in the file system or as the image data.
+            bounding_box (Tuple[int, int, int, int]):
+                The bounding box to crop the image.
+
+        Returns:
+            str:
+                The HTML image display string, or the unmodified data
+                value if the image cannot be processed.
+        """
+        candidate_path = None
+        # Get the pattern map for segmentation file regex
+        pattern_map = self._custom_attrs.get("segmentation_file_regex")
+
+        # Step 1: Find the candidate file if the data value is not already a file
         if not pathlib.Path(data_value).is_file():
-            # Use rglob to recursively search for a matching file
+            # Search for the data value in the data context directory
             if candidate_paths := list(
                 pathlib.Path(self._custom_attrs["data_context_dir"]).rglob(data_value)
             ):
-                # if we find a candidate, return the first one
+                # If a candidate file is found, use the first one
                 candidate_path = candidate_paths[0]
             else:
-                # we don't have any candidate paths so return the unmodified value
+                # If no candidate file is found, return the original data value
                 return data_value
 
+        pil_image = None
+        # Step 2: Search for a mask
+        pil_image = self.search_for_mask_or_outline(
+            data_value,
+            pattern_map,
+            self._custom_attrs["data_mask_context_dir"],
+            candidate_path,
+            mask=True,
+        )
+
+        # If no mask is found, proceed to search for an outline
+        if pil_image is None:
+            # Step 3: Search for an outline if no mask was found
+            pil_image = self.search_for_mask_or_outline(
+                data_value,
+                pattern_map,
+                self._custom_attrs["data_outline_context_dir"],
+                candidate_path,
+                mask=False,
+            )
+
+        # Step 4: If neither mask nor outline is found, load the image directly
+        if pil_image is None:
+            tiff_image = skimage.io.imread(candidate_path)
+            pil_image = Image.fromarray(tiff_image)
+
+        # Step 5: Crop the image based on the bounding box and encode it to PNG format
         try:
-            if self._custom_attrs["data_mask_context_dir"] is not None and (
-                matching_mask_file := list(
-                    pathlib.Path(self._custom_attrs["data_mask_context_dir"]).rglob(
-                        f"{pathlib.Path(candidate_path).stem}*"
-                    )
-                )
-            ):
-                pil_image = self.draw_outline_on_image_from_mask(
-                    actual_image_path=candidate_path,
-                    mask_image_path=matching_mask_file[0],
-                )
+            cropped_img = pil_image.crop(bounding_box)  # Crop the image
+            png_bytes_io = BytesIO()  # Create a buffer to hold the PNG data
+            cropped_img.save(png_bytes_io, format="PNG")  # Save cropped image to buffer
+            png_bytes = png_bytes_io.getvalue()  # Retrieve PNG data
 
-            elif self._custom_attrs["data_outline_context_dir"] is not None and (
-                matching_outline_file := list(
-                    pathlib.Path(self._custom_attrs["data_outline_context_dir"]).rglob(
-                        f"{pathlib.Path(candidate_path).stem}*"
-                    )
-                )
-            ):
-                pil_image = self.draw_outline_on_image_from_outline(
-                    actual_image_path=candidate_path,
-                    outline_image_path=matching_outline_file[0],
-                )
-
-            else:
-                # Read the TIFF image from the byte array
-                tiff_image = skimage.io.imread(candidate_path)
-
-                # Convert the image array to a PIL Image
-                pil_image = Image.fromarray(tiff_image)
-
-            cropped_img = pil_image.crop(bounding_box)
-
-            # Save the PIL Image as PNG to a BytesIO object
-            png_bytes_io = BytesIO()
-            cropped_img.save(png_bytes_io, format="PNG")
-
-            # Get the PNG byte data
-            png_bytes = png_bytes_io.getvalue()
-
-        except (FileNotFoundError, ValueError) as exc:
-            # return the raw data value if we run into an exception of some kind
-            print(f"Unable to process image from {candidate_path} due to {exc}")
+        except (FileNotFoundError, ValueError):
+            # Handle errors if image processing fails
             return data_value
 
+        # Return HTML image display as a base64-encoded PNG
         return (
             '<img src="data:image/png;base64,'
             f'{base64.b64encode(png_bytes).decode("utf-8")}" style="width:300px;"/>'

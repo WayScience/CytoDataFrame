@@ -42,6 +42,18 @@ def fixture_cytotable_nuclear_speckle_data_parquet():
     return "tests/data/cytotable/nuclear_speckles/test_slide1_converted.parquet"
 
 
+@pytest.fixture(name="cytotable_pediatric_cancer_atlas_parquet_parquet")
+def fixture_pediatric_cancer_atlas_data_parquet():
+    """
+    Return df to test CytoTable pediatric cancer atlas data through
+    shrunken parquet file
+    """
+    return (
+        "tests/data/cytotable/pediatric_cancer_atlas_profiling"
+        "/BR00143976_shrunken.parquet"
+    )
+
+
 @pytest.fixture(name="basic_outlier_dataframe")
 def fixture_basic_outlier_dataframe():
     """

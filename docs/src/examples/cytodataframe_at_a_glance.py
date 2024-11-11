@@ -28,7 +28,28 @@ from cytodataframe.frame import CytoDataFrame
 jump_data_path = "../../../tests/data/cytotable/JUMP_plate_BR00117006"
 nf1_cellpainting_path = "../../../tests/data/cytotable/NF1_cellpainting_data_shrunken/"
 nuclear_speckles_path = "../../../tests/data/cytotable/nuclear_speckles"
+pediatric_cancer_atlas_path = (
+    "../../../tests/data/cytotable/pediatric_cancer_atlas_profiling"
+)
 # -
+# view ALSF pediatric cancer atlas plate BR00143976 with images
+CytoDataFrame(
+    data=f"{pediatric_cancer_atlas_path}/BR00143976_shrunken.parquet",
+    data_context_dir=f"{pediatric_cancer_atlas_path}/images/orig",
+    data_outline_context_dir=f"{pediatric_cancer_atlas_path}/images/outlines",
+    segmentation_file_regex={
+        r"CellsOutlines_BR(\d+)_C(\d{2})_\d+\.tiff": r".*ch3.*\.tiff",
+        r"NucleiOutlines_BR(\d+)_C(\d{2})_\d+\.tiff": r".*ch5.*\.tiff",
+    },
+)[
+    [
+        "Metadata_ImageNumber",
+        "Metadata_Nuclei_Number_Object_Number",
+        "Image_FileName_OrigAGP",
+        "Image_FileName_OrigDNA",
+    ]
+][:3]
+
 # %%time
 # view JUMP plate BR00117006 with images
 CytoDataFrame(
