@@ -54,6 +54,7 @@ jupytext = "^1.16.4"
 black = "^24.10.0"
 isort = "^5.13.2"
 jupyterlab-code-formatter = "^3.0.2"
+duckdb = "^1.1.3"
 
 [tool.poetry.group.docs.dependencies]
 # used for rendering docs into docsite
