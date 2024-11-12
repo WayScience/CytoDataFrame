@@ -452,13 +452,14 @@
 
     <span class="n">_metadata</span><span class="p">:</span> <span class="n">ClassVar</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;_custom_attrs&quot;</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>  <span class="c1"># noqa: PLR0913</span>
         <span class="bp">self</span><span class="p">:</span> <span class="n">CytoDataFrame_type</span><span class="p">,</span>
         <span class="n">data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">CytoDataFrame_type</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">],</span>
         <span class="n">data_context_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">data_bounding_box</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">data_mask_context_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">data_outline_context_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">segmentation_file_regex</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -475,22 +476,30 @@
 <span class="sd">                Directory context for the mask data for images.</span>
 <span class="sd">            data_outline_context_dir: Optional[str]:</span>
 <span class="sd">                Directory context for the outline data for images.</span>
+<span class="sd">            segmentation_file_regex: Optional[Dict[str, str]]:</span>
+<span class="sd">                A dictionary which includes regex strings for mapping segmentation</span>
+<span class="sd">                images (masks or outlines) to unsegmented images.</span>
 <span class="sd">            **kwargs:</span>
 <span class="sd">                Additional keyword arguments to pass to the pandas read functions.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;data_source&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="s2">&quot;data_context_dir&quot;</span><span class="p">:</span> <span class="n">data_context_dir</span>
-            <span class="k">if</span> <span class="n">data_context_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;data_context_dir&quot;</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">data_context_dir</span> <span class="k">if</span> <span class="n">data_context_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
             <span class="s2">&quot;data_bounding_box&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="s2">&quot;data_mask_context_dir&quot;</span><span class="p">:</span> <span class="n">data_mask_context_dir</span>
-            <span class="k">if</span> <span class="n">data_mask_context_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="s2">&quot;data_outline_context_dir&quot;</span><span class="p">:</span> <span class="n">data_outline_context_dir</span>
-            <span class="k">if</span> <span class="n">data_outline_context_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;data_mask_context_dir&quot;</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">data_mask_context_dir</span> <span class="k">if</span> <span class="n">data_mask_context_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="s2">&quot;data_outline_context_dir&quot;</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">data_outline_context_dir</span>
+                <span class="k">if</span> <span class="n">data_outline_context_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="s2">&quot;segmentation_file_regex&quot;</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">segmentation_file_regex</span> <span class="k">if</span> <span class="n">segmentation_file_regex</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
         <span class="p">}</span>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">CytoDataFrame</span><span class="p">):</span>
@@ -567,6 +576,7 @@
                 <span class="n">data_bounding_box</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_bounding_box&quot;</span><span class="p">],</span>
                 <span class="n">data_mask_context_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_mask_context_dir&quot;</span><span class="p">],</span>
                 <span class="n">data_outline_context_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_outline_context_dir&quot;</span><span class="p">],</span>
+                <span class="n">segmentation_file_regex</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;segmentation_file_regex&quot;</span><span class="p">],</span>
             <span class="p">)</span>
 
 <div class="viewcode-block" id="CytoDataFrame._wrap_method">
@@ -604,6 +614,7 @@
                 <span class="n">data_bounding_box</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_bounding_box&quot;</span><span class="p">],</span>
                 <span class="n">data_mask_context_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_mask_context_dir&quot;</span><span class="p">],</span>
                 <span class="n">data_outline_context_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_outline_context_dir&quot;</span><span class="p">],</span>
+                <span class="n">segmentation_file_regex</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;segmentation_file_regex&quot;</span><span class="p">],</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">result</span></div>
 
@@ -904,6 +915,99 @@
         <span class="k">return</span> <span class="n">Image</span><span class="o">.</span><span class="n">alpha_composite</span><span class="p">(</span><span class="n">tiff_image</span><span class="p">,</span> <span class="n">outline_image</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="CytoDataFrame.search_for_mask_or_outline">
+<a class="viewcode-back" href="../../../python-api.html#src.cytodataframe.frame.CytoDataFrame.search_for_mask_or_outline">[docs]</a>
+    <span class="k">def</span> <span class="nf">search_for_mask_or_outline</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">:</span> <span class="n">CytoDataFrame_type</span><span class="p">,</span>
+        <span class="n">data_value</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">pattern_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">file_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">candidate_path</span><span class="p">:</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span>
+        <span class="n">mask</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Image</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Search for a mask or outline image file based on the</span>
+<span class="sd">        provided patterns and apply it to the target image.</span>
+
+<span class="sd">        This function attempts to find a mask or outline image</span>
+<span class="sd">        for a given data value, either based on a pattern map</span>
+<span class="sd">        or by searching the file directory directly. If a mask</span>
+<span class="sd">        or outline is found, it is drawn on the target image.</span>
+<span class="sd">        If no relevant file is found, the function returns None.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data_value (str):</span>
+<span class="sd">                The value used to match patterns for locating</span>
+<span class="sd">                mask or outline files.</span>
+<span class="sd">            pattern_map (dict):</span>
+<span class="sd">                A dictionary of file patterns and their corresponding</span>
+<span class="sd">                original patterns for matching.</span>
+<span class="sd">            file_dir (str):</span>
+<span class="sd">                The directory where image files are stored.</span>
+<span class="sd">            candidate_path (pathlib.Path):</span>
+<span class="sd">                The path to the candidate image file to apply</span>
+<span class="sd">                the mask or outline to.</span>
+<span class="sd">            mask (bool, optional):</span>
+<span class="sd">                Whether to search for a mask (True) or an outline</span>
+<span class="sd">                (False). Default is True.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Image:</span>
+<span class="sd">                The target image with the applied mask or outline,</span>
+<span class="sd">                or None if no relevant file is found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Return None if the provided file directory is None</span>
+        <span class="k">if</span> <span class="n">file_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># If no pattern map is provided and a matching mask</span>
+        <span class="c1"># file is found in the directory, apply the mask to</span>
+        <span class="c1"># the image and return the result</span>
+        <span class="k">if</span> <span class="n">pattern_map</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="n">matching_mask_file</span> <span class="o">:=</span> <span class="nb">list</span><span class="p">(</span>
+                <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">file_dir</span><span class="p">)</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">candidate_path</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s2">*&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">draw_outline_on_image_from_mask</span><span class="p">(</span>
+                <span class="n">actual_image_path</span><span class="o">=</span><span class="n">candidate_path</span><span class="p">,</span>
+                <span class="n">mask_image_path</span><span class="o">=</span><span class="n">matching_mask_file</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="p">)</span>
+
+        <span class="c1"># If no pattern map is provided and no matching mask</span>
+        <span class="c1"># is found, return None</span>
+        <span class="k">if</span> <span class="n">pattern_map</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Iterate through the pattern map and search for matching files</span>
+        <span class="c1"># based on the data value</span>
+        <span class="k">for</span> <span class="n">file_pattern</span><span class="p">,</span> <span class="n">original_pattern</span> <span class="ow">in</span> <span class="n">pattern_map</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="c1"># Check if the current data value matches the pattern</span>
+            <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">original_pattern</span><span class="p">,</span> <span class="n">data_value</span><span class="p">):</span>
+                <span class="c1"># Find all matching files in the directory</span>
+                <span class="n">matching_files</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">file</span>
+                    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">file_dir</span><span class="p">)</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">&quot;*&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">file_pattern</span><span class="p">,</span> <span class="n">file</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="p">]</span>
+                <span class="c1"># If matching files are found, apply the mask</span>
+                <span class="c1"># or outline based on the &#39;mask&#39; flag</span>
+                <span class="k">if</span> <span class="n">matching_files</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">mask</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">draw_outline_on_image_from_mask</span><span class="p">(</span>
+                            <span class="n">actual_image_path</span><span class="o">=</span><span class="n">candidate_path</span><span class="p">,</span>
+                            <span class="n">mask_image_path</span><span class="o">=</span><span class="n">matching_files</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                        <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">draw_outline_on_image_from_outline</span><span class="p">(</span>
+                            <span class="n">actual_image_path</span><span class="o">=</span><span class="n">candidate_path</span><span class="p">,</span>
+                            <span class="n">outline_image_path</span><span class="o">=</span><span class="n">matching_files</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                        <span class="p">)</span>
+
+        <span class="c1"># If no matching files are found, return None</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
 <div class="viewcode-block" id="CytoDataFrame.process_image_data_as_html_display">
 <a class="viewcode-back" href="../../../python-api.html#src.cytodataframe.frame.CytoDataFrame.process_image_data_as_html_display">[docs]</a>
     <span class="k">def</span> <span class="nf">process_image_data_as_html_display</span><span class="p">(</span>
@@ -911,63 +1015,77 @@
         <span class="n">data_value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>  <span class="c1"># noqa: ANN401</span>
         <span class="n">bounding_box</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Process the image data based on the provided data value</span>
+<span class="sd">        and bounding box, applying masks or outlines where</span>
+<span class="sd">        applicable, and return an HTML representation of the</span>
+<span class="sd">        cropped image for display.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data_value (Any):</span>
+<span class="sd">                The value to search for in the file system or as the image data.</span>
+<span class="sd">            bounding_box (Tuple[int, int, int, int]):</span>
+<span class="sd">                The bounding box to crop the image.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str:</span>
+<span class="sd">                The HTML image display string, or the unmodified data</span>
+<span class="sd">                value if the image cannot be processed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">candidate_path</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="c1"># Get the pattern map for segmentation file regex</span>
+        <span class="n">pattern_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;segmentation_file_regex&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Step 1: Find the candidate file if the data value is not already a file</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">data_value</span><span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
-            <span class="c1"># Use rglob to recursively search for a matching file</span>
+            <span class="c1"># Search for the data value in the data context directory</span>
             <span class="k">if</span> <span class="n">candidate_paths</span> <span class="o">:=</span> <span class="nb">list</span><span class="p">(</span>
                 <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_context_dir&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="n">data_value</span><span class="p">)</span>
             <span class="p">):</span>
-                <span class="c1"># if we find a candidate, return the first one</span>
+                <span class="c1"># If a candidate file is found, use the first one</span>
                 <span class="n">candidate_path</span> <span class="o">=</span> <span class="n">candidate_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># we don&#39;t have any candidate paths so return the unmodified value</span>
+                <span class="c1"># If no candidate file is found, return the original data value</span>
                 <span class="k">return</span> <span class="n">data_value</span>
 
+        <span class="n">pil_image</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="c1"># Step 2: Search for a mask</span>
+        <span class="n">pil_image</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_for_mask_or_outline</span><span class="p">(</span>
+            <span class="n">data_value</span><span class="p">,</span>
+            <span class="n">pattern_map</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_mask_context_dir&quot;</span><span class="p">],</span>
+            <span class="n">candidate_path</span><span class="p">,</span>
+            <span class="n">mask</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># If no mask is found, proceed to search for an outline</span>
+        <span class="k">if</span> <span class="n">pil_image</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Step 3: Search for an outline if no mask was found</span>
+            <span class="n">pil_image</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_for_mask_or_outline</span><span class="p">(</span>
+                <span class="n">data_value</span><span class="p">,</span>
+                <span class="n">pattern_map</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_outline_context_dir&quot;</span><span class="p">],</span>
+                <span class="n">candidate_path</span><span class="p">,</span>
+                <span class="n">mask</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Step 4: If neither mask nor outline is found, load the image directly</span>
+        <span class="k">if</span> <span class="n">pil_image</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">tiff_image</span> <span class="o">=</span> <span class="n">skimage</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">candidate_path</span><span class="p">)</span>
+            <span class="n">pil_image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">tiff_image</span><span class="p">)</span>
+
+        <span class="c1"># Step 5: Crop the image based on the bounding box and encode it to PNG format</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_mask_context_dir&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span>
-                <span class="n">matching_mask_file</span> <span class="o">:=</span> <span class="nb">list</span><span class="p">(</span>
-                    <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_mask_context_dir&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">candidate_path</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s2">*&quot;</span>
-                    <span class="p">)</span>
-                <span class="p">)</span>
-            <span class="p">):</span>
-                <span class="n">pil_image</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">draw_outline_on_image_from_mask</span><span class="p">(</span>
-                    <span class="n">actual_image_path</span><span class="o">=</span><span class="n">candidate_path</span><span class="p">,</span>
-                    <span class="n">mask_image_path</span><span class="o">=</span><span class="n">matching_mask_file</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-                <span class="p">)</span>
+            <span class="n">cropped_img</span> <span class="o">=</span> <span class="n">pil_image</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="n">bounding_box</span><span class="p">)</span>  <span class="c1"># Crop the image</span>
+            <span class="n">png_bytes_io</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">()</span>  <span class="c1"># Create a buffer to hold the PNG data</span>
+            <span class="n">cropped_img</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">png_bytes_io</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;PNG&quot;</span><span class="p">)</span>  <span class="c1"># Save cropped image to buffer</span>
+            <span class="n">png_bytes</span> <span class="o">=</span> <span class="n">png_bytes_io</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span>  <span class="c1"># Retrieve PNG data</span>
 
-            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_outline_context_dir&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span>
-                <span class="n">matching_outline_file</span> <span class="o">:=</span> <span class="nb">list</span><span class="p">(</span>
-                    <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_outline_context_dir&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">candidate_path</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s2">*&quot;</span>
-                    <span class="p">)</span>
-                <span class="p">)</span>
-            <span class="p">):</span>
-                <span class="n">pil_image</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">draw_outline_on_image_from_outline</span><span class="p">(</span>
-                    <span class="n">actual_image_path</span><span class="o">=</span><span class="n">candidate_path</span><span class="p">,</span>
-                    <span class="n">outline_image_path</span><span class="o">=</span><span class="n">matching_outline_file</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-                <span class="p">)</span>
-
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># Read the TIFF image from the byte array</span>
-                <span class="n">tiff_image</span> <span class="o">=</span> <span class="n">skimage</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">candidate_path</span><span class="p">)</span>
-
-                <span class="c1"># Convert the image array to a PIL Image</span>
-                <span class="n">pil_image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">tiff_image</span><span class="p">)</span>
-
-            <span class="n">cropped_img</span> <span class="o">=</span> <span class="n">pil_image</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="n">bounding_box</span><span class="p">)</span>
-
-            <span class="c1"># Save the PIL Image as PNG to a BytesIO object</span>
-            <span class="n">png_bytes_io</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">()</span>
-            <span class="n">cropped_img</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">png_bytes_io</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;PNG&quot;</span><span class="p">)</span>
-
-            <span class="c1"># Get the PNG byte data</span>
-            <span class="n">png_bytes</span> <span class="o">=</span> <span class="n">png_bytes_io</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span>
-
-        <span class="k">except</span> <span class="p">(</span><span class="ne">FileNotFoundError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="c1"># return the raw data value if we run into an exception of some kind</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unable to process image from </span><span class="si">{</span><span class="n">candidate_path</span><span class="si">}</span><span class="s2"> due to </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">FileNotFoundError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="c1"># Handle errors if image processing fails</span>
             <span class="k">return</span> <span class="n">data_value</span>
 
+        <span class="c1"># Return HTML image display as a base64-encoded PNG</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="s1">&#39;&lt;img src=&quot;data:image/png;base64,&#39;</span>
             <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">png_bytes</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span><span class="si">}</span><span class="s1">&quot; style=&quot;width:300px;&quot;/&gt;&#39;</span>
