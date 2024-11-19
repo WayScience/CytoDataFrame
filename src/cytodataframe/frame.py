@@ -34,7 +34,7 @@ from pandas.io.formats import (
 from PIL import Image, ImageDraw
 
 from .image import (
-    adjust_with_adaptive_histogram_equalization_cv2,
+    adjust_with_adaptive_histogram_equalization,
 )
 
 # provide backwards compatibility for Self type in earlier Python versions.
@@ -636,7 +636,7 @@ class CytoDataFrame(pd.DataFrame):
                 if self._custom_attrs["image_adjustment"] is not None:
                     orig_image = self._custom_attrs["image_adjustment"](orig_image)
                 else:
-                    orig_image = adjust_with_adaptive_histogram_equalization_cv2(
+                    orig_image = adjust_with_adaptive_histogram_equalization(
                         image=orig_image
                     )
                     # orig_image = auto_contrast(auto_brightness(orig_image))
