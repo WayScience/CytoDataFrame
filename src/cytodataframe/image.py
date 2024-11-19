@@ -7,6 +7,7 @@ import numpy as np
 from PIL import Image, ImageEnhance
 from skimage import exposure
 from skimage.util import img_as_ubyte
+from skimage.filters import gaussian
 
 
 def is_image_too_dark(
