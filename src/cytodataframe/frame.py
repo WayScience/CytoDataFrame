@@ -5,6 +5,7 @@ Defines a CytoDataFrame class.
 import base64
 import pathlib
 import re
+from collections.abc import Callable
 from io import BytesIO, StringIO
 from typing import (
     Any,
@@ -32,7 +33,9 @@ from pandas.io.formats import (
 )
 from PIL import Image, ImageDraw
 
-from .image import adjust_image_brightness, is_image_too_dark
+from .image import (
+    adjust_with_adaptive_histogram_equalization_cv2,
+)
 
 # provide backwards compatibility for Self type in earlier Python versions.
 # see: https://peps.python.org/pep-0484/#annotating-instance-and-class-methods
@@ -67,6 +70,7 @@ class CytoDataFrame(pd.DataFrame):
         data_mask_context_dir: Optional[str] = None,
         data_outline_context_dir: Optional[str] = None,
         segmentation_file_regex: Optional[Dict[str, str]] = None,
+        image_adjustment: Callable = None,
         **kwargs: Dict[str, Any],
     ) -> None:
         """
@@ -86,6 +90,14 @@ class CytoDataFrame(pd.DataFrame):
             segmentation_file_regex: Optional[Dict[str, str]]:
                 A dictionary which includes regex strings for mapping segmentation
                 images (masks or outlines) to unsegmented images.
+            image_adjustment: Callable
+                A callable function which will be used to make image adjustments
+                when they are processed by CytoDataFrame. The function should
+                include a single parameter which takes as input a PIL Image and
+                return the same after ajustments. Defaults to None,
+                which will incur an adaptive histogram equalization on images.
+                Reference histogram equalization for more information:
+                https://scikit-image.org/docs/stable/auto_examples/color_exposure/
             **kwargs:
                 Additional keyword arguments to pass to the pandas read functions.
         """
@@ -106,6 +118,9 @@ class CytoDataFrame(pd.DataFrame):
             ),
             "segmentation_file_regex": (
                 segmentation_file_regex if segmentation_file_regex is not None else None
+            ),
+            "image_adjustment": (
+                image_adjustment if image_adjustment is not None else None
             ),
         }
 
@@ -184,6 +199,7 @@ class CytoDataFrame(pd.DataFrame):
                 data_mask_context_dir=self._custom_attrs["data_mask_context_dir"],
                 data_outline_context_dir=self._custom_attrs["data_outline_context_dir"],
                 segmentation_file_regex=self._custom_attrs["segmentation_file_regex"],
+                image_adjustment=self._custom_attrs["image_adjustment"],
             )
 
     def _wrap_method(
@@ -220,6 +236,7 @@ class CytoDataFrame(pd.DataFrame):
                 data_mask_context_dir=self._custom_attrs["data_mask_context_dir"],
                 data_outline_context_dir=self._custom_attrs["data_outline_context_dir"],
                 segmentation_file_regex=self._custom_attrs["segmentation_file_regex"],
+                image_adjustment=self._custom_attrs["image_adjustment"],
             )
         return result
 
@@ -376,22 +393,21 @@ class CytoDataFrame(pd.DataFrame):
             .any()
         ]
 
-    @staticmethod
     def draw_outline_on_image_from_outline(
-        actual_image_path: str, outline_image_path: str
+        self: CytoDataFrame_type, orig_image: Image.Image, outline_image_path: str
     ) -> Image:
         """
         Draws green outlines on a TIFF image based on an outline image and returns
         the combined result.
 
-        This method takes the path to a TIFF image and an outline image (where
+        This method takes an image and an outline image (where
         outlines are non-black and the background is black) and overlays the green
         outlines on the TIFF image. The resulting image, which combines the TIFF
         image with the green outline, is returned.
 
         Args:
-            actual_image_path (str):
-                Path to the TIFF image file.
+            orig_image (PIL.Image):
+                Image which a mask will be applied to.
             outline_image_path (str):
                 Path to the outline image file.
 
@@ -406,16 +422,6 @@ class CytoDataFrame(pd.DataFrame):
             ValueError:
                 If the images are not in compatible formats or sizes.
         """
-        # Load the TIFF image
-        tiff_image_array = skimage.io.imread(actual_image_path)
-
-        # Check if the image is 16-bit and grayscale
-        if tiff_image_array.dtype == np.uint16:
-            # Normalize the image to 8-bit for display purposes
-            tiff_image_array = (tiff_image_array / 256).astype(np.uint8)
-
-        # Convert to PIL Image and then to 'RGBA'
-        tiff_image = Image.fromarray(tiff_image_array).convert("RGBA")
 
         # Load the outline image
         outline_image = Image.open(outline_image_path).convert("RGBA")
@@ -434,46 +440,34 @@ class CytoDataFrame(pd.DataFrame):
         outline_image = Image.fromarray(outline_array)
 
         # Combine the TIFF image with the green outline image
-        return Image.alpha_composite(tiff_image, outline_image)
+        return Image.alpha_composite(orig_image, outline_image)
 
-    @staticmethod
     def draw_outline_on_image_from_mask(
-        actual_image_path: str, mask_image_path: str
+        self: CytoDataFrame_type, orig_image: Image.Image, mask_image_path: str
     ) -> Image:
         """
         Draws outlines on a TIFF image based on a mask image and returns
         the combined result.
 
-        This method takes the path to a TIFF image and a mask image, creates
+        This method takes an image and a mask image, creates
         an outline from the mask, and overlays it on the TIFF image. The resulting
         image, which combines the TIFF image with the mask outline, is returned.
 
         Args:
-            actual_image_path (str): Path to the TIFF image file.
-            mask_image_path (str): Path to the mask image file.
+            orig_image (Image):
+                Image which a mask will be applied to.
+            mask_image_path (str):
+                Path to the mask image file.
 
         Returns:
-            PIL.Image.Image: A PIL Image object that is the result of
-            combining the TIFF image with the mask outline.
+            PIL.Image.Image:
+                A PIL Image object that is the result of
+                combining the TIFF image with the mask outline.
 
         Raises:
             FileNotFoundError: If the specified image or mask file does not exist.
             ValueError: If the images are not in compatible formats or sizes.
         """
-        # Load the TIFF image
-        tiff_image_array = skimage.io.imread(actual_image_path)
-
-        # Check if the image is 16-bit and grayscale
-        if tiff_image_array.dtype == np.uint16:
-            # Normalize the image to 8-bit for display purposes
-            tiff_image_array = (tiff_image_array / 256).astype(np.uint8)
-
-        # Convert to PIL Image and then to 'RGBA'
-        tiff_image = Image.fromarray(tiff_image_array).convert("RGBA")
-
-        # Check if the image is too dark and adjust brightness if needed
-        if is_image_too_dark(tiff_image):
-            tiff_image = adjust_image_brightness(tiff_image)
 
         # Load the mask image and convert it to grayscale
         mask_image = Image.open(mask_image_path).convert("L")
@@ -484,7 +478,7 @@ class CytoDataFrame(pd.DataFrame):
         contours = skimage.measure.find_contours(mask_array, level=128)
 
         # Create an outline image with transparent background
-        outline_image = Image.new("RGBA", tiff_image.size, (0, 0, 0, 0))
+        outline_image = Image.new("RGBA", orig_image.size, (0, 0, 0, 0))
         draw = ImageDraw.Draw(outline_image)
 
         for contour in contours:
@@ -496,7 +490,7 @@ class CytoDataFrame(pd.DataFrame):
             )
 
         # Combine the TIFF image with the outline image
-        return Image.alpha_composite(tiff_image, outline_image)
+        return Image.alpha_composite(orig_image, outline_image)
 
     def search_for_mask_or_outline(
         self: CytoDataFrame_type,
@@ -504,8 +498,9 @@ class CytoDataFrame(pd.DataFrame):
         pattern_map: dict,
         file_dir: str,
         candidate_path: pathlib.Path,
+        orig_image: Image.Image,
         mask: bool = True,
-    ) -> Image:
+    ) -> Image.Image:
         """
         Search for a mask or outline image file based on the
         provided patterns and apply it to the target image.
@@ -528,6 +523,9 @@ class CytoDataFrame(pd.DataFrame):
             candidate_path (pathlib.Path):
                 The path to the candidate image file to apply
                 the mask or outline to.
+            orig_image (Image):
+                The image which will have a mask or outline
+                applied.
             mask (bool, optional):
                 Whether to search for a mask (True) or an outline
                 (False). Default is True.
@@ -551,7 +549,7 @@ class CytoDataFrame(pd.DataFrame):
             )
         ):
             return self.draw_outline_on_image_from_mask(
-                actual_image_path=candidate_path,
+                orig_image=orig_image,
                 mask_image_path=matching_mask_file[0],
             )
 
@@ -576,12 +574,12 @@ class CytoDataFrame(pd.DataFrame):
                 if matching_files:
                     if mask:
                         return self.draw_outline_on_image_from_mask(
-                            actual_image_path=candidate_path,
+                            orig_image=orig_image,
                             mask_image_path=matching_files[0],
                         )
                     else:
                         return self.draw_outline_on_image_from_outline(
-                            actual_image_path=candidate_path,
+                            orig_image=orig_image,
                             outline_image_path=matching_files[0],
                         )
 
@@ -621,40 +619,63 @@ class CytoDataFrame(pd.DataFrame):
                 pathlib.Path(self._custom_attrs["data_context_dir"]).rglob(data_value)
             ):
                 # If a candidate file is found, use the first one
-                candidate_path = candidate_paths[0]
+                # Load the TIFF image
+                print(candidate_paths[0])
+                orig_image_array = skimage.io.imread(candidate_paths[0])
+                Image.fromarray(orig_image_array).save("before_convert.png")
+
+                if orig_image_array.dtype == np.uint16:
+                    # Normalize the image to 8-bit for display purposes
+                    orig_image_array = (orig_image_array / 256).astype(np.uint8)
+
+                # Convert to PIL Image and then to 'RGBA'
+                orig_image = Image.fromarray(orig_image_array).convert("RGBA")
+
+                orig_image.save("before.png")
+                # Adjust the image with image adjustment callable or adaptive histogram equalization
+                if self._custom_attrs["image_adjustment"] is not None:
+                    orig_image = self._custom_attrs["image_adjustment"](orig_image)
+                else:
+                    orig_image = adjust_with_adaptive_histogram_equalization_cv2(
+                        image=orig_image
+                    )
+                    # orig_image = auto_contrast(auto_brightness(orig_image))
+
+                orig_image.save("after.png")
             else:
                 # If no candidate file is found, return the original data value
                 return data_value
 
-        pil_image = None
+        prepared_image = None
         # Step 2: Search for a mask
-        pil_image = self.search_for_mask_or_outline(
-            data_value,
-            pattern_map,
-            self._custom_attrs["data_mask_context_dir"],
-            candidate_path,
+        prepared_image = self.search_for_mask_or_outline(
+            data_value=data_value,
+            pattern_map=pattern_map,
+            file_dir=self._custom_attrs["data_mask_context_dir"],
+            candidate_path=candidate_paths[0],
+            orig_image=orig_image,
             mask=True,
         )
 
         # If no mask is found, proceed to search for an outline
-        if pil_image is None:
+        if prepared_image is None:
             # Step 3: Search for an outline if no mask was found
-            pil_image = self.search_for_mask_or_outline(
-                data_value,
-                pattern_map,
-                self._custom_attrs["data_outline_context_dir"],
-                candidate_path,
+            prepared_image = self.search_for_mask_or_outline(
+                data_value=data_value,
+                pattern_map=pattern_map,
+                file_dir=self._custom_attrs["data_outline_context_dir"],
+                candidate_path=candidate_paths[0],
+                orig_image=orig_image,
                 mask=False,
             )
 
         # Step 4: If neither mask nor outline is found, load the image directly
-        if pil_image is None:
-            tiff_image = skimage.io.imread(candidate_path)
-            pil_image = Image.fromarray(tiff_image)
+        if prepared_image is None:
+            prepared_image = orig_image
 
         # Step 5: Crop the image based on the bounding box and encode it to PNG format
         try:
-            cropped_img = pil_image.crop(bounding_box)  # Crop the image
+            cropped_img = prepared_image.crop(bounding_box)  # Crop the image
             png_bytes_io = BytesIO()  # Create a buffer to hold the PNG data
             cropped_img.save(png_bytes_io, format="PNG")  # Save cropped image to buffer
             png_bytes = png_bytes_io.getvalue()  # Retrieve PNG data
