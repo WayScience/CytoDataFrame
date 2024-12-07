@@ -7,6 +7,7 @@ import pathlib
 import re
 from collections.abc import Callable
 from io import BytesIO, StringIO
+from skimage.util import img_as_ubyte
 from typing import (
     Any,
     Callable,
@@ -493,23 +494,17 @@ class CytoDataFrame(pd.DataFrame):
         return Image.alpha_composite(orig_image, outline_image)
 
     def search_for_mask_or_outline(
-        self: CytoDataFrame_type,
+        self,
         data_value: str,
         pattern_map: dict,
         file_dir: str,
         candidate_path: pathlib.Path,
-        orig_image: Image.Image,
+        orig_image: np.ndarray,
         mask: bool = True,
-    ) -> Image.Image:
+    ) -> np.ndarray:
         """
         Search for a mask or outline image file based on the
         provided patterns and apply it to the target image.
-
-        This function attempts to find a mask or outline image
-        for a given data value, either based on a pattern map
-        or by searching the file directory directly. If a mask
-        or outline is found, it is drawn on the target image.
-        If no relevant file is found, the function returns None.
 
         Args:
             data_value (str):
@@ -583,7 +578,6 @@ class CytoDataFrame(pd.DataFrame):
                             outline_image_path=matching_files[0],
                         )
 
-        # If no matching files are found, return None
         return None
 
     def process_image_data_as_html_display(
@@ -619,29 +613,18 @@ class CytoDataFrame(pd.DataFrame):
                 pathlib.Path(self._custom_attrs["data_context_dir"]).rglob(data_value)
             ):
                 # If a candidate file is found, use the first one
-                # Load the TIFF image
-                print(candidate_paths[0])
-                orig_image_array = skimage.io.imread(candidate_paths[0])
-                Image.fromarray(orig_image_array).save("before_convert.png")
+                candidate_path = candidate_paths[0]
+                orig_image_array = skimage.io.imread(candidate_path)
 
-                if orig_image_array.dtype == np.uint16:
-                    # Normalize the image to 8-bit for display purposes
-                    orig_image_array = (orig_image_array / 256).astype(np.uint8)
-
-                # Convert to PIL Image and then to 'RGBA'
-                orig_image = Image.fromarray(orig_image_array).convert("RGBA")
-
-                orig_image.save("before.png")
                 # Adjust the image with image adjustment callable or adaptive histogram equalization
                 if self._custom_attrs["image_adjustment"] is not None:
-                    orig_image = self._custom_attrs["image_adjustment"](orig_image)
+                    orig_image_array = self._custom_attrs["image_adjustment"](orig_image_array)
                 else:
-                    orig_image = adjust_with_adaptive_histogram_equalization(
-                        image=orig_image
-                    )
-                    # orig_image = auto_contrast(auto_brightness(orig_image))
+                    orig_image_array = adjust_with_adaptive_histogram_equalization(orig_image_array)
 
-                orig_image.save("after.png")
+                # Normalize to 0-255 for image saving
+                orig_image_array = img_as_ubyte(orig_image_array)
+
             else:
                 # If no candidate file is found, return the original data value
                 return data_value
@@ -652,8 +635,8 @@ class CytoDataFrame(pd.DataFrame):
             data_value=data_value,
             pattern_map=pattern_map,
             file_dir=self._custom_attrs["data_mask_context_dir"],
-            candidate_path=candidate_paths[0],
-            orig_image=orig_image,
+            candidate_path=candidate_path,
+            orig_image=orig_image_array,
             mask=True,
         )
 
@@ -664,24 +647,37 @@ class CytoDataFrame(pd.DataFrame):
                 data_value=data_value,
                 pattern_map=pattern_map,
                 file_dir=self._custom_attrs["data_outline_context_dir"],
-                candidate_path=candidate_paths[0],
-                orig_image=orig_image,
+                candidate_path=candidate_path,
+                orig_image=orig_image_array,
                 mask=False,
             )
 
-        # Step 4: If neither mask nor outline is found, load the image directly
+        # Step 4: If neither mask nor outline is found, use the original image array
         if prepared_image is None:
-            prepared_image = orig_image
+            prepared_image = orig_image_array
 
         # Step 5: Crop the image based on the bounding box and encode it to PNG format
         try:
-            cropped_img = prepared_image.crop(bounding_box)  # Crop the image
-            png_bytes_io = BytesIO()  # Create a buffer to hold the PNG data
-            cropped_img.save(png_bytes_io, format="PNG")  # Save cropped image to buffer
-            png_bytes = png_bytes_io.getvalue()  # Retrieve PNG data
+            x_min, y_min, x_max, y_max = map(int, bounding_box)  # Ensure integers
+            cropped_img_array = prepared_image[y_min:y_max, x_min:x_max]  # Perform slicing
+        except ValueError as e:
+            raise ValueError(f"Bounding box contains invalid values: {bounding_box}") from e
+        except IndexError as e:
+            raise IndexError(
+                f"Bounding box {bounding_box} is out of bounds for image dimensions "
+                f"{prepared_image.shape}"
+            ) from e
+        
+        # Step 6: 
+        try:
+            # Save cropped image to buffer
+            png_bytes_io = BytesIO()
+            skimage.io.imsave(png_bytes_io, cropped_img_array, plugin="imageio", extension=".png")
+            png_bytes = png_bytes_io.getvalue()
 
-        except (FileNotFoundError, ValueError):
+        except (FileNotFoundError, ValueError) as exc:
             # Handle errors if image processing fails
+            print(exc)
             return data_value
 
         # Return HTML image display as a base64-encoded PNG
