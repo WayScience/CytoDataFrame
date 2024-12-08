@@ -30,11 +30,12 @@ from pandas._config import (
 from pandas.io.formats import (
     format as fmt,
 )
-from skimage import draw
 from skimage.util import img_as_ubyte
 
 from .image import (
     adjust_with_adaptive_histogram_equalization,
+    draw_outline_on_image_from_mask,
+    draw_outline_on_image_from_outline,
 )
 
 # provide backwards compatibility for Self type in earlier Python versions.
@@ -393,102 +394,8 @@ class CytoDataFrame(pd.DataFrame):
             .any()
         ]
 
-    def draw_outline_on_image_from_outline(
-        self: CytoDataFrame_type, orig_image: np.ndarray, outline_image_path: str
-    ) -> np.ndarray:
-        """
-        Draws green outlines on an image based on an outline image and returns
-        the combined result.
-
-        Args:
-            orig_image (np.ndarray):
-                Image which a mask will be applied to. Must be a NumPy array.
-            outline_image_path (str):
-                Path to the outline image file.
-
-        Returns:
-            np.ndarray:
-                The resulting image with the green outline applied.
-        """
-        # Load the outline image
-        outline_image = skimage.io.imread(outline_image_path)
-
-        # Create a mask for non-black areas in the outline image
-        non_black_mask = np.any(
-            outline_image[..., :3] != 0, axis=-1
-        )  # Assuming RGB or RGBA input
-
-        # Ensure the original image is RGB (convert if necessary)
-        # Grayscale input
-        if orig_image.ndim == 2:  # noqa: PLR2004
-            orig_image = np.stack([orig_image] * 3, axis=-1)
-        # Unsupported input
-        elif orig_image.shape[-1] != 3:  # noqa: PLR2004
-            raise ValueError("Original image must have 3 channels (RGB).")
-
-        # Make a copy of the original image to avoid modifying it
-        combined_image = orig_image.copy()
-
-        # Create a green outline
-        combined_image[non_black_mask] = [0, 255, 0]  # Green in uint8
-
-        return combined_image
-
-    def draw_outline_on_image_from_mask(
-        self: CytoDataFrame_type, orig_image: np.ndarray, mask_image_path: str
-    ) -> np.ndarray:
-        """
-        Draws green outlines on an image based on a binary mask and returns
-        the combined result.
-
-        Args:
-            orig_image (np.ndarray):
-                Image which a mask will be applied to. Must be a NumPy array.
-            mask_image_path (str):
-                Path to the binary mask image file.
-
-        Returns:
-            np.ndarray:
-                The resulting image with the green outline applied.
-        """
-        # Load the binary mask image
-        mask_image = skimage.io.imread(mask_image_path)
-
-        # Ensure the original image is RGB
-        if orig_image.ndim == 2:  # Grayscale input
-            orig_image = np.stack([orig_image] * 3, axis=-1)
-        elif orig_image.shape[-1] != 3:  # Unsupported input
-            raise ValueError("Original image must have 3 channels (RGB).")
-
-        # Ensure the mask is 2D (binary)
-        if mask_image.ndim > 2:
-            mask_image = mask_image[..., 0]  # Take the first channel if multi-channel
-
-        # Detect contours from the mask
-        contours = skimage.measure.find_contours(mask_image, level=0.5)
-
-        # Create an outline image with the same shape as the original image
-        outline_image = np.zeros_like(orig_image)
-
-        # Draw contours as green lines
-        for contour in contours:
-            rr, cc = draw.polygon_perimeter(
-                np.round(contour[:, 0]).astype(int),
-                np.round(contour[:, 1]).astype(int),
-                shape=orig_image.shape[:2],
-            )
-            # Assign green color to the outline in all three channels
-            outline_image[rr, cc, :] = [0, 255, 0]
-
-        # Combine the original image with the green outline
-        combined_image = orig_image.copy()
-        mask = np.any(outline_image > 0, axis=-1)  # Non-zero pixels in the outline
-        combined_image[mask] = outline_image[mask]
-
-        return combined_image
-
-    def search_for_mask_or_outline(
-        self,
+    def search_for_mask_or_outline(  # noqa: PLR0913, PLR0911
+        self: CytoDataFrame_type,
         data_value: str,
         pattern_map: dict,
         file_dir: str,
@@ -501,19 +408,26 @@ class CytoDataFrame(pd.DataFrame):
         provided patterns and apply it to the target image.
 
         Args:
-            data_value (str): The value used to match patterns for locating
+            data_value (str):
+                The value used to match patterns for locating
                 mask or outline files.
-            pattern_map (dict): A dictionary of file patterns and their corresponding
+            pattern_map (dict):
+                A dictionary of file patterns and their corresponding
                 original patterns for matching.
-            file_dir (str): The directory where image files are stored.
-            candidate_path (pathlib.Path): The path to the candidate image file to apply
+            file_dir (str):
+                The directory where image files are stored.
+            candidate_path (pathlib.Path):
+                The path to the candidate image file to apply
                 the mask or outline to.
-            orig_image (np.ndarray): The image which will have a mask or outline applied.
-            mask (bool, optional): Whether to search for a mask (True) or an outline (False).
+            orig_image (np.ndarray):
+                The image which will have a mask or outline applied.
+            mask (bool, optional):
+                Whether to search for a mask (True) or an outline (False).
                 Default is True.
 
         Returns:
-            np.ndarray: The target image with the applied mask or outline,
+            np.ndarray:
+                The target image with the applied mask or outline,
                 or None if no relevant file is found.
         """
         if file_dir is None:
@@ -525,11 +439,11 @@ class CytoDataFrame(pd.DataFrame):
             )
             if matching_mask_file:
                 if mask:
-                    return self.draw_outline_on_image_from_mask(
+                    return draw_outline_on_image_from_mask(
                         orig_image=orig_image, mask_image_path=matching_mask_file[0]
                     )
                 else:
-                    return self.draw_outline_on_image_from_outline(
+                    return draw_outline_on_image_from_outline(
                         orig_image=orig_image, outline_image_path=matching_mask_file[0]
                     )
             return None
@@ -543,11 +457,11 @@ class CytoDataFrame(pd.DataFrame):
                 ]
                 if matching_files:
                     if mask:
-                        return self.draw_outline_on_image_from_mask(
+                        return draw_outline_on_image_from_mask(
                             orig_image=orig_image, mask_image_path=matching_files[0]
                         )
                     else:
-                        return self.draw_outline_on_image_from_outline(
+                        return draw_outline_on_image_from_outline(
                             orig_image=orig_image, outline_image_path=matching_files[0]
                         )
 
@@ -589,7 +503,8 @@ class CytoDataFrame(pd.DataFrame):
                 candidate_path = candidate_paths[0]
                 orig_image_array = skimage.io.imread(candidate_path)
 
-                # Adjust the image with image adjustment callable or adaptive histogram equalization
+                # Adjust the image with image adjustment callable
+                # or adaptive histogram equalization
                 if self._custom_attrs["image_adjustment"] is not None:
                     orig_image_array = self._custom_attrs["image_adjustment"](
                         orig_image_array

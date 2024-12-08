@@ -2,10 +2,14 @@
 Helper functions for working with images in the context of CytoDataFrames.
 """
 
+
 import cv2
 import numpy as np
+import skimage
+import skimage.io
+import skimage.measure
 from PIL import Image, ImageEnhance
-from skimage import exposure
+from skimage import draw, exposure
 from skimage.filters import gaussian
 from skimage.util import img_as_ubyte
 
@@ -71,6 +75,107 @@ def adjust_image_brightness(image: Image.Image) -> Image.Image:
     return reduced_brightness_image
 
 
+def draw_outline_on_image_from_outline(
+    orig_image: np.ndarray, outline_image_path: str
+) -> np.ndarray:
+    """
+    Draws green outlines on an image based on an outline image and returns
+    the combined result.
+    """
+
+    # Load the outline image
+    outline_image = skimage.io.imread(outline_image_path)
+
+    # Resize if necessary
+    if outline_image.shape[:2] != orig_image.shape[:2]:
+        outline_image = skimage.transform.resize(
+            outline_image,
+            orig_image.shape[:2],
+            preserve_range=True,
+            anti_aliasing=True,
+        ).astype(orig_image.dtype)
+
+    # Create a mask for non-black areas (with threshold)
+    threshold = 10  # Adjust as needed
+    # Grayscale
+    if outline_image.ndim == 2:  # noqa: PLR2004
+        non_black_mask = outline_image > threshold
+    else:  # RGB/RGBA
+        non_black_mask = np.any(outline_image[..., :3] > threshold, axis=-1)
+
+    # Ensure the original image is RGB
+    if orig_image.ndim == 2:  # noqa: PLR2004
+        orig_image = np.stack([orig_image] * 3, axis=-1)
+    elif orig_image.shape[-1] != 3:  # noqa: PLR2004
+        raise ValueError("Original image must have 3 channels (RGB).")
+
+    # Ensure uint8 data type
+    if orig_image.dtype != np.uint8:
+        orig_image = (orig_image * 255).astype(np.uint8)
+
+    # Apply the green outline
+    combined_image = orig_image.copy()
+    combined_image[non_black_mask] = [0, 255, 0]  # Green in uint8
+
+    return combined_image
+
+
+def draw_outline_on_image_from_mask(
+    orig_image: np.ndarray, mask_image_path: str
+) -> np.ndarray:
+    """
+    Draws green outlines on an image based on a binary mask and returns
+    the combined result.
+
+    Args:
+        orig_image (np.ndarray):
+            Image which a mask will be applied to. Must be a NumPy array.
+        mask_image_path (str):
+            Path to the binary mask image file.
+
+    Returns:
+        np.ndarray:
+            The resulting image with the green outline applied.
+    """
+    # Load the binary mask image
+    mask_image = skimage.io.imread(mask_image_path)
+
+    # Ensure the original image is RGB
+    # Grayscale input
+    if orig_image.ndim == 2:  # noqa: PLR2004
+        orig_image = np.stack([orig_image] * 3, axis=-1)
+    # Unsupported input
+    elif orig_image.shape[-1] != 3:  # noqa: PLR2004
+        raise ValueError("Original image must have 3 channels (RGB).")
+
+    # Ensure the mask is 2D (binary)
+    if mask_image.ndim > 2:  # noqa: PLR2004
+        mask_image = mask_image[..., 0]  # Take the first channel if multi-channel
+
+    # Detect contours from the mask
+    contours = skimage.measure.find_contours(mask_image, level=0.5)
+
+    # Create an outline image with the same shape as the original image
+    outline_image = np.zeros_like(orig_image)
+
+    # Draw contours as green lines
+    for contour in contours:
+        rr, cc = draw.polygon_perimeter(
+            np.round(contour[:, 0]).astype(int),
+            np.round(contour[:, 1]).astype(int),
+            shape=orig_image.shape[:2],
+        )
+        # Assign green color to the outline in all three channels
+        outline_image[rr, cc, :] = [0, 255, 0]
+
+    # Combine the original image with the green outline
+    combined_image = orig_image.copy()
+    mask = np.any(outline_image > 0, axis=-1)  # Non-zero pixels in the outline
+    combined_image[mask] = outline_image[mask]
+
+    return combined_image
+
+
 def adjust_with_adaptive_histogram_equalization(image: Image.Image) -> Image.Image:
     """
     Adaptive histogram equalization with additional smoothing to reduce graininess.
@@ -93,7 +198,8 @@ def adjust_with_adaptive_histogram_equalization(image: Image.Image) -> Image.Ima
     nbins = 512  # Increase bins for finer histogram granularity
 
     # Check if the image has an alpha channel (RGBA)
-    if image_np.shape[-1] == 4:  # RGBA image
+    # RGBA image
+    if image_np.shape[-1] == 4:  # noqa: PLR2004
         # Split the channels: RGB and A
         rgb_np = image_np[:, :, :3]
         alpha_np = image_np[:, :, 3]
@@ -119,7 +225,8 @@ def adjust_with_adaptive_histogram_equalization(image: Image.Image) -> Image.Ima
         # Combine the processed RGB with the original alpha channel
         final_image_np = np.dstack([equalized_rgb_np, alpha_np])
 
-    elif len(image_np.shape) == 2:  # Grayscale
+    # Grayscale
+    elif len(image_np.shape) == 2:  # noqa: PLR2004
         # Apply CLAHE directly to the grayscale image
         final_image_np = exposure.equalize_adapthist(
             image_np,
