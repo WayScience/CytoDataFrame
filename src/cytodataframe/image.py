@@ -2,7 +2,6 @@
 Helper functions for working with images in the context of CytoDataFrames.
 """
 
-
 import cv2
 import numpy as np
 import skimage
@@ -10,7 +9,6 @@ import skimage.io
 import skimage.measure
 from PIL import Image, ImageEnhance
 from skimage import draw, exposure
-from skimage.filters import gaussian
 from skimage.util import img_as_ubyte
 
 
@@ -216,16 +214,13 @@ def adjust_with_adaptive_histogram_equalization(image: Image.Image) -> Image.Ima
                 nbins=nbins,
             )
 
-        # Apply Gaussian smoothing to reduce graininess
-        equalized_rgb_np = gaussian(equalized_rgb_np, sigma=0.5, channel_axis=-1)
-
         # Convert processed RGB back to 8-bit
         equalized_rgb_np = img_as_ubyte(equalized_rgb_np)
 
         # Combine the processed RGB with the original alpha channel
         final_image_np = np.dstack([equalized_rgb_np, alpha_np])
 
-    # Grayscale
+    # Grayscale image
     elif len(image_np.shape) == 2:  # noqa: PLR2004
         # Apply CLAHE directly to the grayscale image
         final_image_np = exposure.equalize_adapthist(
@@ -234,14 +229,29 @@ def adjust_with_adaptive_histogram_equalization(image: Image.Image) -> Image.Ima
             clip_limit=clip_limit,
             nbins=nbins,
         )
-        # Apply Gaussian smoothing to reduce graininess
-        final_image_np = gaussian(final_image_np, sigma=0.5)
         # Convert processed image back to 8-bit
         final_image_np = img_as_ubyte(final_image_np)
 
+    # RGB image
+    elif image_np.shape[-1] == 3:  # noqa: PLR2004
+        # Placeholder for processed RGB channels
+        equalized_rgb_np = np.zeros_like(image_np, dtype=np.float32)
+
+        # Apply AHE to each RGB channel separately
+        for channel in range(3):
+            equalized_rgb_np[:, :, channel] = exposure.equalize_adapthist(
+                image_np[:, :, channel],
+                kernel_size=kernel_size,
+                clip_limit=clip_limit,
+                nbins=nbins,
+            )
+
+        # Convert processed RGB back to 8-bit
+        final_image_np = img_as_ubyte(equalized_rgb_np)
+
     else:
         raise ValueError(
-            "Unsupported image format. Ensure the image is grayscale or RGBA."
+            "Unsupported image format. Ensure the image is grayscale, RGB, or RGBA."
         )
 
     # Convert NumPy array back to PIL Image

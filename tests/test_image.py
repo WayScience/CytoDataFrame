@@ -2,6 +2,9 @@
 Tests cosmicqc image module
 """
 
+import pathlib
+from typing import Tuple
+
 import numpy as np
 import pytest
 from PIL import Image
@@ -10,10 +13,10 @@ from skimage.io import imsave
 
 from cytodataframe.image import (
     adjust_image_brightness,
+    adjust_with_adaptive_histogram_equalization,
     draw_outline_on_image_from_mask,
     draw_outline_on_image_from_outline,
     is_image_too_dark,
-    adjust_with_adaptive_histogram_equalization
 )
 
 
@@ -84,11 +87,14 @@ def test_adjust_nuclear_speckle_image_brightness(
     ],
 )
 def test_draw_outline_on_image_from_outline(
-    tmp_path, orig_image, outline_image, expected_non_black_mask
-):
+    tmp_path: pathlib.Path,
+    orig_image: np.ndarray,
+    outline_image: np.ndarray,
+    expected_non_black_mask: bool,
+) -> None:
     """
-    Tests draw_outline_on_image_from_outline
-    """   
+    Tests draw_outline_on_image_from_outline.
+    """
     # Save the outline image to a temporary path
     outline_image_path = tmp_path / "outline.png"
     imsave(outline_image_path, outline_image)
@@ -135,10 +141,13 @@ def test_draw_outline_on_image_from_outline(
     ],
 )
 def test_draw_outline_on_image_from_mask(
-    tmp_path, orig_image, mask_image, expected_outlines
-):
+    tmp_path: pathlib.Path,
+    orig_image: np.ndarray,
+    mask_image: np.ndarray,
+    expected_outlines: bool,
+) -> None:
     """
-    Tests draw_outline_on_image_from_mask
+    Tests draw_outline_on_image_from_mask.
     """
     # Create a valid circular mask for case 3
     if mask_image.shape == (20, 20) and expected_outlines:
@@ -170,14 +179,25 @@ def test_draw_outline_on_image_from_mask(
         # Grayscale image
         (Image.fromarray(np.zeros((100, 100), dtype=np.uint8)), "L", (100, 100)),
         # RGB image
-        (Image.fromarray(np.zeros((100, 100, 3), dtype=np.uint8)), "RGB", (100, 100, 3)),
+        (
+            Image.fromarray(np.zeros((100, 100, 3), dtype=np.uint8)),
+            "RGB",
+            (100, 100, 3),
+        ),
         # RGBA image
-        (Image.fromarray(np.zeros((100, 100, 4), dtype=np.uint8)), "RGBA", (100, 100, 4)),
+        (
+            Image.fromarray(np.zeros((100, 100, 4), dtype=np.uint8)),
+            "RGBA",
+            (100, 100, 4),
+        ),
     ],
 )
 def test_adjust_with_adaptive_histogram_equalization(
-    input_image, expected_mode, expected_shape
-):
+    input_image: Image.Image, expected_mode: str, expected_shape: Tuple[int, ...]
+) -> None:
+    """
+    Tests adjust_with_adaptive_histogram_equalization.
+    """
     # Call the function
     output_image = adjust_with_adaptive_histogram_equalization(input_image)
 
@@ -185,12 +205,18 @@ def test_adjust_with_adaptive_histogram_equalization(
     assert isinstance(output_image, Image.Image), "Output is not a PIL Image."
 
     # Check that the mode is as expected
-    assert output_image.mode == expected_mode, f"Expected mode {expected_mode}, got {output_image.mode}."
+    assert (
+        output_image.mode == expected_mode
+    ), f"Expected mode {expected_mode}, got {output_image.mode}."
 
     # Convert output image to NumPy array and check its shape
     output_array = np.asarray(output_image)
-    assert output_array.shape == expected_shape, f"Expected shape {expected_shape}, got {output_array.shape}."
+    assert (
+        output_array.shape == expected_shape
+    ), f"Expected shape {expected_shape}, got {output_array.shape}."
 
     # Check that the output is not identical to the input
     input_array = np.asarray(input_image)
-    assert not np.array_equal(input_array, output_array), "Output image is identical to input, no adjustment applied."
+    assert not np.array_equal(
+        input_array, output_array
+    ), "Output image is identical to input, no adjustment applied."
