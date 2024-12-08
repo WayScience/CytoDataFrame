@@ -6,8 +6,8 @@ import cv2
 import numpy as np
 from PIL import Image, ImageEnhance
 from skimage import exposure
-from skimage.util import img_as_ubyte
 from skimage.filters import gaussian
+from skimage.util import img_as_ubyte
 
 
 def is_image_too_dark(
@@ -139,4 +139,3 @@ def adjust_with_adaptive_histogram_equalization(image: Image.Image) -> Image.Ima
 
     # Convert NumPy array back to PIL Image
     return Image.fromarray(final_image_np)
-

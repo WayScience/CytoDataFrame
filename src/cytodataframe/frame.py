@@ -7,13 +7,8 @@ import pathlib
 import re
 from collections.abc import Callable
 from io import BytesIO, StringIO
-import numpy as np
-from skimage import io, draw
-from skimage.color import gray2rgba
-from skimage.util import img_as_ubyte
 from typing import (
     Any,
-    Callable,
     ClassVar,
     Dict,
     List,
@@ -35,7 +30,8 @@ from pandas._config import (
 from pandas.io.formats import (
     format as fmt,
 )
-from PIL import Image, ImageDraw
+from skimage import draw
+from skimage.util import img_as_ubyte
 
 from .image import (
     adjust_with_adaptive_histogram_equalization,
@@ -74,7 +70,7 @@ class CytoDataFrame(pd.DataFrame):
         data_mask_context_dir: Optional[str] = None,
         data_outline_context_dir: Optional[str] = None,
         segmentation_file_regex: Optional[Dict[str, str]] = None,
-        image_adjustment: Callable = None,
+        image_adjustment: Optional[Callable] = None,
         **kwargs: Dict[str, Any],
     ) -> None:
         """
@@ -98,7 +94,7 @@ class CytoDataFrame(pd.DataFrame):
                 A callable function which will be used to make image adjustments
                 when they are processed by CytoDataFrame. The function should
                 include a single parameter which takes as input a PIL Image and
-                return the same after ajustments. Defaults to None,
+                return the same after adjustments. Defaults to None,
                 which will incur an adaptive histogram equalization on images.
                 Reference histogram equalization for more information:
                 https://scikit-image.org/docs/stable/auto_examples/color_exposure/
@@ -397,9 +393,9 @@ class CytoDataFrame(pd.DataFrame):
             .any()
         ]
 
-
-
-    def draw_outline_on_image_from_outline(self, orig_image: np.ndarray, outline_image_path: str) -> np.ndarray:
+    def draw_outline_on_image_from_outline(
+        self: CytoDataFrame_type, orig_image: np.ndarray, outline_image_path: str
+    ) -> np.ndarray:
         """
         Draws green outlines on an image based on an outline image and returns
         the combined result.
@@ -416,14 +412,18 @@ class CytoDataFrame(pd.DataFrame):
         """
         # Load the outline image
         outline_image = skimage.io.imread(outline_image_path)
-        
+
         # Create a mask for non-black areas in the outline image
-        non_black_mask = np.any(outline_image[..., :3] != 0, axis=-1)  # Assuming RGB or RGBA input
-        
+        non_black_mask = np.any(
+            outline_image[..., :3] != 0, axis=-1
+        )  # Assuming RGB or RGBA input
+
         # Ensure the original image is RGB (convert if necessary)
-        if orig_image.ndim == 2:  # Grayscale input
+        # Grayscale input
+        if orig_image.ndim == 2:  # noqa: PLR2004
             orig_image = np.stack([orig_image] * 3, axis=-1)
-        elif orig_image.shape[-1] != 3:  # Unsupported input
+        # Unsupported input
+        elif orig_image.shape[-1] != 3:  # noqa: PLR2004
             raise ValueError("Original image must have 3 channels (RGB).")
 
         # Make a copy of the original image to avoid modifying it
@@ -431,11 +431,12 @@ class CytoDataFrame(pd.DataFrame):
 
         # Create a green outline
         combined_image[non_black_mask] = [0, 255, 0]  # Green in uint8
-        
+
         return combined_image
 
-
-    def draw_outline_on_image_from_mask(self, orig_image: np.ndarray, mask_image_path: str) -> np.ndarray:
+    def draw_outline_on_image_from_mask(
+        self: CytoDataFrame_type, orig_image: np.ndarray, mask_image_path: str
+    ) -> np.ndarray:
         """
         Draws green outlines on an image based on a binary mask and returns
         the combined result.
@@ -452,23 +453,23 @@ class CytoDataFrame(pd.DataFrame):
         """
         # Load the binary mask image
         mask_image = skimage.io.imread(mask_image_path)
-        
+
         # Ensure the original image is RGB
         if orig_image.ndim == 2:  # Grayscale input
             orig_image = np.stack([orig_image] * 3, axis=-1)
         elif orig_image.shape[-1] != 3:  # Unsupported input
             raise ValueError("Original image must have 3 channels (RGB).")
-        
+
         # Ensure the mask is 2D (binary)
         if mask_image.ndim > 2:
             mask_image = mask_image[..., 0]  # Take the first channel if multi-channel
 
         # Detect contours from the mask
         contours = skimage.measure.find_contours(mask_image, level=0.5)
-        
+
         # Create an outline image with the same shape as the original image
         outline_image = np.zeros_like(orig_image)
-        
+
         # Draw contours as green lines
         for contour in contours:
             rr, cc = draw.polygon_perimeter(
@@ -478,12 +479,12 @@ class CytoDataFrame(pd.DataFrame):
             )
             # Assign green color to the outline in all three channels
             outline_image[rr, cc, :] = [0, 255, 0]
-        
+
         # Combine the original image with the green outline
         combined_image = orig_image.copy()
         mask = np.any(outline_image > 0, axis=-1)  # Non-zero pixels in the outline
         combined_image[mask] = outline_image[mask]
-        
+
         return combined_image
 
     def search_for_mask_or_outline(
@@ -552,7 +553,6 @@ class CytoDataFrame(pd.DataFrame):
 
         return None
 
-
     def process_image_data_as_html_display(
         self: CytoDataFrame_type,
         data_value: Any,  # noqa: ANN401
@@ -591,9 +591,13 @@ class CytoDataFrame(pd.DataFrame):
 
                 # Adjust the image with image adjustment callable or adaptive histogram equalization
                 if self._custom_attrs["image_adjustment"] is not None:
-                    orig_image_array = self._custom_attrs["image_adjustment"](orig_image_array)
+                    orig_image_array = self._custom_attrs["image_adjustment"](
+                        orig_image_array
+                    )
                 else:
-                    orig_image_array = adjust_with_adaptive_histogram_equalization(orig_image_array)
+                    orig_image_array = adjust_with_adaptive_histogram_equalization(
+                        orig_image_array
+                    )
 
                 # Normalize to 0-255 for image saving
                 orig_image_array = img_as_ubyte(orig_image_array)
@@ -632,20 +636,26 @@ class CytoDataFrame(pd.DataFrame):
         # Step 5: Crop the image based on the bounding box and encode it to PNG format
         try:
             x_min, y_min, x_max, y_max = map(int, bounding_box)  # Ensure integers
-            cropped_img_array = prepared_image[y_min:y_max, x_min:x_max]  # Perform slicing
+            cropped_img_array = prepared_image[
+                y_min:y_max, x_min:x_max
+            ]  # Perform slicing
         except ValueError as e:
-            raise ValueError(f"Bounding box contains invalid values: {bounding_box}") from e
+            raise ValueError(
+                f"Bounding box contains invalid values: {bounding_box}"
+            ) from e
         except IndexError as e:
             raise IndexError(
                 f"Bounding box {bounding_box} is out of bounds for image dimensions "
                 f"{prepared_image.shape}"
             ) from e
-        
-        # Step 6: 
+
+        # Step 6:
         try:
             # Save cropped image to buffer
             png_bytes_io = BytesIO()
-            skimage.io.imsave(png_bytes_io, cropped_img_array, plugin="imageio", extension=".png")
+            skimage.io.imsave(
+                png_bytes_io, cropped_img_array, plugin="imageio", extension=".png"
+            )
             png_bytes = png_bytes_io.getvalue()
 
         except (FileNotFoundError, ValueError) as exc:
