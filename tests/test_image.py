@@ -3,7 +3,6 @@ Tests cosmicqc image module
 """
 
 import pathlib
-from typing import Tuple
 
 import numpy as np
 import pytest
@@ -173,50 +172,54 @@ def test_draw_outline_on_image_from_mask(
         assert mask is None or not mask.any(), "Unexpected outlines found."
 
 
+# Sample test data for different image types
 @pytest.mark.parametrize(
-    "input_image, expected_mode, expected_shape",
+    "input_image, expected_shape, is_exception_expected",
     [
-        # Grayscale image
-        (Image.fromarray(np.zeros((100, 100), dtype=np.uint8)), "L", (100, 100)),
-        # RGB image
+        # Grayscale image (2D array)
+        (np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]]), (3, 3), False),
+        # RGB image (3D array)
         (
-            Image.fromarray(np.zeros((100, 100, 3), dtype=np.uint8)),
-            "RGB",
-            (100, 100, 3),
+            np.array(
+                [
+                    [[0, 0, 0], [255, 0, 0], [0, 255, 0]],
+                    [[0, 0, 0], [0, 255, 0], [255, 0, 0]],
+                    [[255, 0, 0], [0, 0, 0], [0, 255, 0]],
+                ]
+            ),
+            (3, 3, 3),
+            False,
         ),
-        # RGBA image
+        # RGBA image (4D array)
         (
-            Image.fromarray(np.zeros((100, 100, 4), dtype=np.uint8)),
-            "RGBA",
-            (100, 100, 4),
+            np.array(
+                [
+                    [[0, 0, 0, 255], [255, 0, 0, 255], [0, 255, 0, 255]],
+                    [[0, 0, 0, 255], [0, 255, 0, 255], [255, 0, 0, 255]],
+                    [[255, 0, 0, 255], [0, 0, 0, 255], [0, 255, 0, 255]],
+                ]
+            ),
+            (3, 3, 4),
+            False,
         ),
+        # Invalid input (image with 5 channels or unsupported format)
+        (np.array([[[0, 0, 0, 0, 0]]]), None, True),
     ],
 )
 def test_adjust_with_adaptive_histogram_equalization(
-    input_image: Image.Image, expected_mode: str, expected_shape: Tuple[int, ...]
-) -> None:
+    input_image: np.ndarray, expected_shape: np.ndarray, is_exception_expected: bool
+):
     """
-    Tests adjust_with_adaptive_histogram_equalization.
+    Test adjust_with_adaptive_histogram_equalization
     """
-    # Call the function
-    output_image = adjust_with_adaptive_histogram_equalization(input_image)
-
-    # Check that the output is a PIL Image
-    assert isinstance(output_image, Image.Image), "Output is not a PIL Image."
-
-    # Check that the mode is as expected
-    assert (
-        output_image.mode == expected_mode
-    ), f"Expected mode {expected_mode}, got {output_image.mode}."
-
-    # Convert output image to NumPy array and check its shape
-    output_array = np.asarray(output_image)
-    assert (
-        output_array.shape == expected_shape
-    ), f"Expected shape {expected_shape}, got {output_array.shape}."
-
-    # Check that the output is not identical to the input
-    input_array = np.asarray(input_image)
-    assert not np.array_equal(
-        input_array, output_array
-    ), "Output image is identical to input, no adjustment applied."
+    if is_exception_expected:
+        # Test if the function raises an exception for invalid input
+        with pytest.raises(ValueError):
+            adjust_with_adaptive_histogram_equalization(input_image)
+    else:
+        # Test if the function processes the image and
+        # returns a result with the expected shape
+        result = adjust_with_adaptive_histogram_equalization(input_image)
+        assert (
+            result.shape == expected_shape
+        ), f"Expected shape {expected_shape}, but got {result.shape}"

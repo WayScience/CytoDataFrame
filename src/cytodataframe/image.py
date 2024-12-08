@@ -77,8 +77,24 @@ def draw_outline_on_image_from_outline(
     orig_image: np.ndarray, outline_image_path: str
 ) -> np.ndarray:
     """
-    Draws green outlines on an image based on an outline image and returns
+    Draws green outlines on an image based on a provided outline image and returns
     the combined result.
+
+    Args:
+        orig_image (np.ndarray):
+            The original image on which the outlines will be drawn.
+            It must be a grayscale or RGB image with shape `(H, W)` for
+            grayscale or `(H, W, 3)` for RGB.
+        outline_image_path (str):
+            The file path to the outline image. This image will be used
+            to determine the areas where the outlines will be drawn.
+            It can be grayscale or RGB.
+
+    Returns:
+        np.ndarray:
+            The original image with green outlines drawn on the non-black areas from
+            the outline image. The result is returned as an RGB image with shape
+            `(H, W, 3)`.
     """
 
     # Load the outline image
@@ -174,39 +190,35 @@ def draw_outline_on_image_from_mask(
     return combined_image
 
 
-def adjust_with_adaptive_histogram_equalization(image: Image.Image) -> Image.Image:
+def adjust_with_adaptive_histogram_equalization(image: np.ndarray) -> np.ndarray:
     """
     Adaptive histogram equalization with additional smoothing to reduce graininess.
 
     Parameters:
-    image (Image): A PIL Image to be processed.
+        image (np.ndarray):
+            The input image to be processed.
 
     Returns:
-    Image: A PIL Image after applying adaptive histogram equalization.
+        np.ndarray:
+            The processed image with enhanced contrast.
     """
-    # Convert PIL Image to NumPy array
-    image_np = np.asarray(image)
-
     # Adjust parameters dynamically
     kernel_size = (
-        image_np.shape[0] // 10,
-        image_np.shape[1] // 10,
-    )  # Larger regions for smoother adjustment
+        max(image.shape[0] // 10, 1),  # Ensure the kernel size is at least 1
+        max(image.shape[1] // 10, 1),  # Ensure the kernel size is at least 1
+    )
     clip_limit = 0.02  # Lower clip limit to suppress over-enhancement
     nbins = 512  # Increase bins for finer histogram granularity
 
     # Check if the image has an alpha channel (RGBA)
     # RGBA image
-    if image_np.shape[-1] == 4:  # noqa: PLR2004
-        # Split the channels: RGB and A
-        rgb_np = image_np[:, :, :3]
-        alpha_np = image_np[:, :, 3]
+    if image.shape[-1] == 4:  # noqa: PLR2004
+        rgb_np = image[:, :, :3]
+        alpha_np = image[:, :, 3]
 
-        # Placeholder for processed RGB channels
         equalized_rgb_np = np.zeros_like(rgb_np, dtype=np.float32)
 
-        # Apply AHE to each RGB channel separately
-        for channel in range(3):  # Only process R, G, and B channels
+        for channel in range(3):
             equalized_rgb_np[:, :, channel] = exposure.equalize_adapthist(
                 rgb_np[:, :, channel],
                 kernel_size=kernel_size,
@@ -214,39 +226,31 @@ def adjust_with_adaptive_histogram_equalization(image: Image.Image) -> Image.Ima
                 nbins=nbins,
             )
 
-        # Convert processed RGB back to 8-bit
         equalized_rgb_np = img_as_ubyte(equalized_rgb_np)
-
-        # Combine the processed RGB with the original alpha channel
         final_image_np = np.dstack([equalized_rgb_np, alpha_np])
 
     # Grayscale image
-    elif len(image_np.shape) == 2:  # noqa: PLR2004
-        # Apply CLAHE directly to the grayscale image
+    elif len(image.shape) == 2:  # noqa: PLR2004
         final_image_np = exposure.equalize_adapthist(
-            image_np,
+            image,
             kernel_size=kernel_size,
             clip_limit=clip_limit,
             nbins=nbins,
         )
-        # Convert processed image back to 8-bit
         final_image_np = img_as_ubyte(final_image_np)
 
     # RGB image
-    elif image_np.shape[-1] == 3:  # noqa: PLR2004
-        # Placeholder for processed RGB channels
-        equalized_rgb_np = np.zeros_like(image_np, dtype=np.float32)
+    elif image.shape[-1] == 3:  # noqa: PLR2004
+        equalized_rgb_np = np.zeros_like(image, dtype=np.float32)
 
-        # Apply AHE to each RGB channel separately
         for channel in range(3):
             equalized_rgb_np[:, :, channel] = exposure.equalize_adapthist(
-                image_np[:, :, channel],
+                image[:, :, channel],
                 kernel_size=kernel_size,
                 clip_limit=clip_limit,
                 nbins=nbins,
             )
 
-        # Convert processed RGB back to 8-bit
         final_image_np = img_as_ubyte(equalized_rgb_np)
 
     else:
@@ -254,5 +258,4 @@ def adjust_with_adaptive_histogram_equalization(image: Image.Image) -> Image.Ima
             "Unsupported image format. Ensure the image is grayscale, RGB, or RGBA."
         )
 
-    # Convert NumPy array back to PIL Image
-    return Image.fromarray(final_image_np)
+    return final_image_np
