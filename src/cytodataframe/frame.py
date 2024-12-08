@@ -94,7 +94,7 @@ class CytoDataFrame(pd.DataFrame):
             image_adjustment: Callable
                 A callable function which will be used to make image adjustments
                 when they are processed by CytoDataFrame. The function should
-                include a single parameter which takes as input a PIL Image and
+                include a single parameter which takes as input a np.ndarray and
                 return the same after adjustments. Defaults to None,
                 which will incur an adaptive histogram equalization on images.
                 Reference histogram equalization for more information:
