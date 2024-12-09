@@ -14,7 +14,6 @@ jobs:
     steps:
       # checks out the repo
       - uses: actions/checkout@v4
-      # run pre-commit
       - name: Python setup
         uses: actions/setup-python@v5
         with:
@@ -24,7 +23,11 @@ jobs:
           python -m pip install poetry
       - name: Install environment
         run: poetry install --no-interaction --no-ansi
+      # run pre-commit
       - uses: pre-commit/action@v3.0.1
+      # run pre-commit ci lite for automated fixes
+      - uses: pre-commit-ci/lite-action@v1.1.0
+        if: ${{ !cancelled() }}
   run_tests:
     strategy:
       matrix:
