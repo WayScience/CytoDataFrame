@@ -395,12 +395,19 @@
 
 <span class="kn">import</span> <span class="nn">cv2</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">skimage</span>
+<span class="kn">import</span> <span class="nn">skimage.io</span>
+<span class="kn">import</span> <span class="nn">skimage.measure</span>
 <span class="kn">from</span> <span class="nn">PIL</span> <span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">ImageEnhance</span>
+<span class="kn">from</span> <span class="nn">skimage</span> <span class="kn">import</span> <span class="n">draw</span><span class="p">,</span> <span class="n">exposure</span>
+<span class="kn">from</span> <span class="nn">skimage.util</span> <span class="kn">import</span> <span class="n">img_as_ubyte</span>
 
 
 <div class="viewcode-block" id="is_image_too_dark">
 <a class="viewcode-back" href="../../../python-api.html#src.cytodataframe.image.is_image_too_dark">[docs]</a>
-<span class="k">def</span> <span class="nf">is_image_too_dark</span><span class="p">(</span><span class="n">image</span><span class="p">:</span> <span class="n">Image</span><span class="p">,</span> <span class="n">pixel_brightness_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">is_image_too_dark</span><span class="p">(</span>
+    <span class="n">image</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">,</span> <span class="n">pixel_brightness_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Check if the image is too dark based on the mean brightness.</span>
 <span class="sd">    By &quot;too dark&quot; we mean not as visible to the human eye.</span>
@@ -428,7 +435,7 @@
 
 <div class="viewcode-block" id="adjust_image_brightness">
 <a class="viewcode-back" href="../../../python-api.html#src.cytodataframe.image.adjust_image_brightness">[docs]</a>
-<span class="k">def</span> <span class="nf">adjust_image_brightness</span><span class="p">(</span><span class="n">image</span><span class="p">:</span> <span class="n">Image</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Image</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">adjust_image_brightness</span><span class="p">(</span><span class="n">image</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Adjust the brightness of an image using histogram equalization.</span>
 
@@ -460,6 +467,209 @@
     <span class="n">reduced_brightness_image</span> <span class="o">=</span> <span class="n">enhancer</span><span class="o">.</span><span class="n">enhance</span><span class="p">(</span><span class="mf">0.7</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">reduced_brightness_image</span></div>
+
+
+
+<div class="viewcode-block" id="draw_outline_on_image_from_outline">
+<a class="viewcode-back" href="../../../python-api.html#src.cytodataframe.image.draw_outline_on_image_from_outline">[docs]</a>
+<span class="k">def</span> <span class="nf">draw_outline_on_image_from_outline</span><span class="p">(</span>
+    <span class="n">orig_image</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">outline_image_path</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Draws green outlines on an image based on a provided outline image and returns</span>
+<span class="sd">    the combined result.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        orig_image (np.ndarray):</span>
+<span class="sd">            The original image on which the outlines will be drawn.</span>
+<span class="sd">            It must be a grayscale or RGB image with shape `(H, W)` for</span>
+<span class="sd">            grayscale or `(H, W, 3)` for RGB.</span>
+<span class="sd">        outline_image_path (str):</span>
+<span class="sd">            The file path to the outline image. This image will be used</span>
+<span class="sd">            to determine the areas where the outlines will be drawn.</span>
+<span class="sd">            It can be grayscale or RGB.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        np.ndarray:</span>
+<span class="sd">            The original image with green outlines drawn on the non-black areas from</span>
+<span class="sd">            the outline image. The result is returned as an RGB image with shape</span>
+<span class="sd">            `(H, W, 3)`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Load the outline image</span>
+    <span class="n">outline_image</span> <span class="o">=</span> <span class="n">skimage</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">outline_image_path</span><span class="p">)</span>
+
+    <span class="c1"># Resize if necessary</span>
+    <span class="k">if</span> <span class="n">outline_image</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="n">orig_image</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">]:</span>
+        <span class="n">outline_image</span> <span class="o">=</span> <span class="n">skimage</span><span class="o">.</span><span class="n">transform</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span>
+            <span class="n">outline_image</span><span class="p">,</span>
+            <span class="n">orig_image</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">],</span>
+            <span class="n">preserve_range</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">anti_aliasing</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">orig_image</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+    <span class="c1"># Create a mask for non-black areas (with threshold)</span>
+    <span class="n">threshold</span> <span class="o">=</span> <span class="mi">10</span>  <span class="c1"># Adjust as needed</span>
+    <span class="c1"># Grayscale</span>
+    <span class="k">if</span> <span class="n">outline_image</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># noqa: PLR2004</span>
+        <span class="n">non_black_mask</span> <span class="o">=</span> <span class="n">outline_image</span> <span class="o">&gt;</span> <span class="n">threshold</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># RGB/RGBA</span>
+        <span class="n">non_black_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">outline_image</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Ensure the original image is RGB</span>
+    <span class="k">if</span> <span class="n">orig_image</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># noqa: PLR2004</span>
+        <span class="n">orig_image</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">orig_image</span><span class="p">]</span> <span class="o">*</span> <span class="mi">3</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">orig_image</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>  <span class="c1"># noqa: PLR2004</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Original image must have 3 channels (RGB).&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Ensure uint8 data type</span>
+    <span class="k">if</span> <span class="n">orig_image</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">:</span>
+        <span class="n">orig_image</span> <span class="o">=</span> <span class="p">(</span><span class="n">orig_image</span> <span class="o">*</span> <span class="mi">255</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+
+    <span class="c1"># Apply the green outline</span>
+    <span class="n">combined_image</span> <span class="o">=</span> <span class="n">orig_image</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">combined_image</span><span class="p">[</span><span class="n">non_black_mask</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>  <span class="c1"># Green in uint8</span>
+
+    <span class="k">return</span> <span class="n">combined_image</span></div>
+
+
+
+<div class="viewcode-block" id="draw_outline_on_image_from_mask">
+<a class="viewcode-back" href="../../../python-api.html#src.cytodataframe.image.draw_outline_on_image_from_mask">[docs]</a>
+<span class="k">def</span> <span class="nf">draw_outline_on_image_from_mask</span><span class="p">(</span>
+    <span class="n">orig_image</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">mask_image_path</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Draws green outlines on an image based on a binary mask and returns</span>
+<span class="sd">    the combined result.</span>
+
+<span class="sd">    Please note: masks are inherently challenging to use when working with</span>
+<span class="sd">    multi-compartment datasets and may result in outlines that do not</span>
+<span class="sd">    pertain to the precise compartment. For example, if an object mask</span>
+<span class="sd">    overlaps with one or many other object masks the outlines may not</span>
+<span class="sd">    differentiate between objects.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        orig_image (np.ndarray):</span>
+<span class="sd">            Image which a mask will be applied to. Must be a NumPy array.</span>
+<span class="sd">        mask_image_path (str):</span>
+<span class="sd">            Path to the binary mask image file.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        np.ndarray:</span>
+<span class="sd">            The resulting image with the green outline applied.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Load the binary mask image</span>
+    <span class="n">mask_image</span> <span class="o">=</span> <span class="n">skimage</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">mask_image_path</span><span class="p">)</span>
+
+    <span class="c1"># Ensure the original image is RGB</span>
+    <span class="c1"># Grayscale input</span>
+    <span class="k">if</span> <span class="n">orig_image</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># noqa: PLR2004</span>
+        <span class="n">orig_image</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">orig_image</span><span class="p">]</span> <span class="o">*</span> <span class="mi">3</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># Unsupported input</span>
+    <span class="k">elif</span> <span class="n">orig_image</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>  <span class="c1"># noqa: PLR2004</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Original image must have 3 channels (RGB).&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Ensure the mask is 2D (binary)</span>
+    <span class="k">if</span> <span class="n">mask_image</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># noqa: PLR2004</span>
+        <span class="n">mask_image</span> <span class="o">=</span> <span class="n">mask_image</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>  <span class="c1"># Take the first channel if multi-channel</span>
+
+    <span class="c1"># Detect contours from the mask</span>
+    <span class="n">contours</span> <span class="o">=</span> <span class="n">skimage</span><span class="o">.</span><span class="n">measure</span><span class="o">.</span><span class="n">find_contours</span><span class="p">(</span><span class="n">mask_image</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+    <span class="c1"># Create an outline image with the same shape as the original image</span>
+    <span class="n">outline_image</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">orig_image</span><span class="p">)</span>
+
+    <span class="c1"># Draw contours as green lines</span>
+    <span class="k">for</span> <span class="n">contour</span> <span class="ow">in</span> <span class="n">contours</span><span class="p">:</span>
+        <span class="n">rr</span><span class="p">,</span> <span class="n">cc</span> <span class="o">=</span> <span class="n">draw</span><span class="o">.</span><span class="n">polygon_perimeter</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">contour</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">contour</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span>
+            <span class="n">shape</span><span class="o">=</span><span class="n">orig_image</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="c1"># Assign green color to the outline in all three channels</span>
+        <span class="n">outline_image</span><span class="p">[</span><span class="n">rr</span><span class="p">,</span> <span class="n">cc</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># Combine the original image with the green outline</span>
+    <span class="n">combined_image</span> <span class="o">=</span> <span class="n">orig_image</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">outline_image</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># Non-zero pixels in the outline</span>
+    <span class="n">combined_image</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">outline_image</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">combined_image</span></div>
+
+
+
+<div class="viewcode-block" id="adjust_with_adaptive_histogram_equalization">
+<a class="viewcode-back" href="../../../python-api.html#src.cytodataframe.image.adjust_with_adaptive_histogram_equalization">[docs]</a>
+<span class="k">def</span> <span class="nf">adjust_with_adaptive_histogram_equalization</span><span class="p">(</span><span class="n">image</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Adaptive histogram equalization with additional smoothing to reduce graininess.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        image (np.ndarray):</span>
+<span class="sd">            The input image to be processed.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        np.ndarray:</span>
+<span class="sd">            The processed image with enhanced contrast.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Adjust parameters dynamically</span>
+    <span class="n">kernel_size</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="nb">max</span><span class="p">(</span><span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">//</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>  <span class="c1"># Ensure the kernel size is at least 1</span>
+        <span class="nb">max</span><span class="p">(</span><span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">//</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>  <span class="c1"># Ensure the kernel size is at least 1</span>
+    <span class="p">)</span>
+    <span class="n">clip_limit</span> <span class="o">=</span> <span class="mf">0.02</span>  <span class="c1"># Lower clip limit to suppress over-enhancement</span>
+    <span class="n">nbins</span> <span class="o">=</span> <span class="mi">512</span>  <span class="c1"># Increase bins for finer histogram granularity</span>
+
+    <span class="c1"># Check if the image has an alpha channel (RGBA)</span>
+    <span class="c1"># RGBA image</span>
+    <span class="k">if</span> <span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>  <span class="c1"># noqa: PLR2004</span>
+        <span class="n">rgb_np</span> <span class="o">=</span> <span class="n">image</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:</span><span class="mi">3</span><span class="p">]</span>
+        <span class="n">alpha_np</span> <span class="o">=</span> <span class="n">image</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">3</span><span class="p">]</span>
+
+        <span class="n">equalized_rgb_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">rgb_np</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+            <span class="n">equalized_rgb_np</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">channel</span><span class="p">]</span> <span class="o">=</span> <span class="n">exposure</span><span class="o">.</span><span class="n">equalize_adapthist</span><span class="p">(</span>
+                <span class="n">rgb_np</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">channel</span><span class="p">],</span>
+                <span class="n">kernel_size</span><span class="o">=</span><span class="n">kernel_size</span><span class="p">,</span>
+                <span class="n">clip_limit</span><span class="o">=</span><span class="n">clip_limit</span><span class="p">,</span>
+                <span class="n">nbins</span><span class="o">=</span><span class="n">nbins</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">equalized_rgb_np</span> <span class="o">=</span> <span class="n">img_as_ubyte</span><span class="p">(</span><span class="n">equalized_rgb_np</span><span class="p">)</span>
+        <span class="n">final_image_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dstack</span><span class="p">([</span><span class="n">equalized_rgb_np</span><span class="p">,</span> <span class="n">alpha_np</span><span class="p">])</span>
+
+    <span class="c1"># Grayscale image</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># noqa: PLR2004</span>
+        <span class="n">final_image_np</span> <span class="o">=</span> <span class="n">exposure</span><span class="o">.</span><span class="n">equalize_adapthist</span><span class="p">(</span>
+            <span class="n">image</span><span class="p">,</span>
+            <span class="n">kernel_size</span><span class="o">=</span><span class="n">kernel_size</span><span class="p">,</span>
+            <span class="n">clip_limit</span><span class="o">=</span><span class="n">clip_limit</span><span class="p">,</span>
+            <span class="n">nbins</span><span class="o">=</span><span class="n">nbins</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">final_image_np</span> <span class="o">=</span> <span class="n">img_as_ubyte</span><span class="p">(</span><span class="n">final_image_np</span><span class="p">)</span>
+
+    <span class="c1"># RGB image</span>
+    <span class="k">elif</span> <span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>  <span class="c1"># noqa: PLR2004</span>
+        <span class="n">equalized_rgb_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+            <span class="n">equalized_rgb_np</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">channel</span><span class="p">]</span> <span class="o">=</span> <span class="n">exposure</span><span class="o">.</span><span class="n">equalize_adapthist</span><span class="p">(</span>
+                <span class="n">image</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">channel</span><span class="p">],</span>
+                <span class="n">kernel_size</span><span class="o">=</span><span class="n">kernel_size</span><span class="p">,</span>
+                <span class="n">clip_limit</span><span class="o">=</span><span class="n">clip_limit</span><span class="p">,</span>
+                <span class="n">nbins</span><span class="o">=</span><span class="n">nbins</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">final_image_np</span> <span class="o">=</span> <span class="n">img_as_ubyte</span><span class="p">(</span><span class="n">equalized_rgb_np</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Unsupported image format. Ensure the image is grayscale, RGB, or RGBA.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">final_image_np</span></div>
 
 </pre></div>
 
