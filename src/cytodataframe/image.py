@@ -141,6 +141,12 @@ def draw_outline_on_image_from_mask(
     Draws green outlines on an image based on a binary mask and returns
     the combined result.
 
+    Please note: masks are inherently challenging to use when working with
+    multi-compartment datasets and may result in outlines that do not
+    pertain to the precise compartment. For example, if an object mask
+    overlaps with one or many other object masks the outlines may not
+    differentiate between objects.
+
     Args:
         orig_image (np.ndarray):
             Image which a mask will be applied to. Must be a NumPy array.
