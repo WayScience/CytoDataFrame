@@ -1696,13 +1696,13 @@ test = ["hatch", "ipykernel", "openapi-core (>=0.18.0,<0.19.0)", "openapi-spec-v
 
 [[package]]
 name = "jupytext"
-version = "1.16.5"
+version = "1.16.6"
 description = "Jupyter notebooks as Markdown documents, Julia, Python or R scripts"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "jupytext-1.16.5-py3-none-any.whl", hash = "sha256:0c96841e364b0ac401e7f45ee67ee523d69eb7bee59476b8ee96ba39fc964491"},
-    {file = "jupytext-1.16.5.tar.gz", hash = "sha256:2d5f896f11ebee8342f0f5f9c4818a336e12db164bcaec009ea612cd5dc2caa8"},
+    {file = "jupytext-1.16.6-py3-none-any.whl", hash = "sha256:900132031f73fee15a1c9ebd862e05eb5f51e1ad6ab3a2c6fdd97ce2f9c913b4"},
+    {file = "jupytext-1.16.6.tar.gz", hash = "sha256:dbd03f9263c34b737003f388fc069e9030834fb7136879c4c32c32473557baa0"},
 ]
 
 [package.dependencies]
