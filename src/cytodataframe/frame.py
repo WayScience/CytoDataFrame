@@ -489,6 +489,7 @@ class CytoDataFrame(pd.DataFrame):
                 The HTML image display string, or the unmodified data
                 value if the image cannot be processed.
         """
+
         candidate_path = None
         # Get the pattern map for segmentation file regex
         pattern_map = self._custom_attrs.get("segmentation_file_regex")
@@ -496,8 +497,12 @@ class CytoDataFrame(pd.DataFrame):
         # Step 1: Find the candidate file if the data value is not already a file
         if not pathlib.Path(data_value).is_file():
             # Search for the data value in the data context directory
-            if candidate_paths := list(
-                pathlib.Path(self._custom_attrs["data_context_dir"]).rglob(data_value)
+            if self._custom_attrs["data_context_dir"] is not None and (
+                candidate_paths := list(
+                    pathlib.Path(self._custom_attrs["data_context_dir"]).rglob(
+                        data_value
+                    )
+                )
             ):
                 # If a candidate file is found, use the first one
                 candidate_path = candidate_paths[0]
