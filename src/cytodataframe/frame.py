@@ -381,8 +381,25 @@ class CytoDataFrame(pd.DataFrame):
         except NameError:
             return False
 
-    def find_image_columns(self: CytoDataFrame_type) -> bool:
+    def find_image_columns(self: CytoDataFrame_type) -> List[str]:
+        """
+        Find columns containing image file names.
+
+        This method searches for columns in the DataFrame
+        that contain image file names with extensions .tif
+        or .tiff (case insensitive).
+
+        Returns:
+            List[str]:
+                A list of column names that contain
+                image file names.
+
+        """
+        # build a pattern to match image file names
         pattern = r".*\.(tif|tiff)$"
+
+        # search for columns containing image file names
+        # based on pattern above.
         return [
             column
             for column in self.columns
@@ -393,6 +410,33 @@ class CytoDataFrame(pd.DataFrame):
             )
             .any()
         ]
+
+    def find_image_path_columns(
+        self: CytoDataFrame_type, image_cols: List[str]
+    ) -> Dict[str, str]:
+        """
+        Find columns containing image path names
+        (the directory storing the images but not the file
+        names). We do this by seeking the pattern:
+        Image_FileName_X --> Image_PathName_X.
+
+        Args:
+            image_cols: List[str]:
+                A list of column names that contain
+                image file names.
+
+        Returns:
+            Dict[str, str]:
+                A list of column names that contain
+                image file names.
+
+        """
+
+        return {
+            col: col.replace("FileName", "PathName")
+            for col in image_cols
+            if col.replace("FileName", "PathName") in self.columns
+        }
 
     def search_for_mask_or_outline(  # noqa: PLR0913, PLR0911
         self: CytoDataFrame_type,
@@ -471,6 +515,7 @@ class CytoDataFrame(pd.DataFrame):
         self: CytoDataFrame_type,
         data_value: Any,  # noqa: ANN401
         bounding_box: Tuple[int, int, int, int],
+        image_path: Optional[str] = None,
     ) -> str:
         """
         Process the image data based on the provided data value
@@ -639,6 +684,9 @@ class CytoDataFrame(pd.DataFrame):
 
             # determine if we have image_cols to display
         if image_cols := self.find_image_columns():
+            # attempt to find the image path columns
+            image_path_cols = self.find_image_path_columns(image_cols=image_cols)
+
             # re-add bounding box cols if they are no longer available as in cases
             # of masking or accessing various pandas attr's
             bounding_box_externally_joined = False
@@ -695,6 +743,12 @@ class CytoDataFrame(pd.DataFrame):
                                     if "Maximum_Y" in col
                                 )
                             ],
+                        ),
+                        # set the image path based on the image_path cols.
+                        image_path=(
+                            row[image_path_cols[image_col]]
+                            if image_path_cols is not None
+                            else None
                         ),
                     ),
                     axis=1,
