@@ -67,6 +67,7 @@ class CytoDataFrame(pd.DataFrame):
         self: CytoDataFrame_type,
         data: Union[CytoDataFrame_type, pd.DataFrame, str, pathlib.Path],
         data_context_dir: Optional[str] = None,
+        data_image_paths: Optional[pd.DataFrame] = None,
         data_bounding_box: Optional[pd.DataFrame] = None,
         data_mask_context_dir: Optional[str] = None,
         data_outline_context_dir: Optional[str] = None,
@@ -82,6 +83,8 @@ class CytoDataFrame(pd.DataFrame):
                 The data source, either a pandas DataFrame or a file path.
             data_context_dir (Optional[str]):
                 Directory context for the image data within the DataFrame.
+            data_image_paths (Optional[pd.DataFrame]):
+                Image path data for the image files.
             data_bounding_box (Optional[pd.DataFrame]):
                 Bounding box data for the DataFrame images.
             data_mask_context_dir: Optional[str]:
@@ -108,6 +111,7 @@ class CytoDataFrame(pd.DataFrame):
             "data_context_dir": (
                 data_context_dir if data_context_dir is not None else None
             ),
+            "data_image_paths": None,
             "data_bounding_box": None,
             "data_mask_context_dir": (
                 data_mask_context_dir if data_mask_context_dir is not None else None
@@ -168,11 +172,17 @@ class CytoDataFrame(pd.DataFrame):
         else:
             super().__init__(data)
 
-        if data_bounding_box is None:
-            self._custom_attrs["data_bounding_box"] = self.get_bounding_box_from_data()
+        self._custom_attrs["data_bounding_box"] = (
+            self.get_bounding_box_from_data()
+            if data_bounding_box is None
+            else data_bounding_box
+        )
 
-        else:
-            self._custom_attrs["data_bounding_box"] = data_bounding_box
+        self._custom_attrs["data_image_paths"] = (
+            self.get_image_paths_from_data(image_cols=self.find_image_columns())
+            if data_image_paths is None
+            else data_image_paths
+        )
 
     def __getitem__(self: CytoDataFrame_type, key: Union[int, str]) -> Any:  # noqa: ANN401
         """
@@ -196,6 +206,7 @@ class CytoDataFrame(pd.DataFrame):
             return CytoDataFrame(
                 super().__getitem__(key),
                 data_context_dir=self._custom_attrs["data_context_dir"],
+                data_image_paths=self._custom_attrs["data_image_paths"],
                 data_bounding_box=self._custom_attrs["data_bounding_box"],
                 data_mask_context_dir=self._custom_attrs["data_mask_context_dir"],
                 data_outline_context_dir=self._custom_attrs["data_outline_context_dir"],
@@ -233,6 +244,7 @@ class CytoDataFrame(pd.DataFrame):
             result = CytoDataFrame(
                 result,
                 data_context_dir=self._custom_attrs["data_context_dir"],
+                data_image_paths=self._custom_attrs["data_image_paths"],
                 data_bounding_box=self._custom_attrs["data_bounding_box"],
                 data_mask_context_dir=self._custom_attrs["data_mask_context_dir"],
                 data_outline_context_dir=self._custom_attrs["data_outline_context_dir"],
@@ -411,11 +423,11 @@ class CytoDataFrame(pd.DataFrame):
             .any()
         ]
 
-    def find_image_path_columns(
+    def get_image_paths_from_data(
         self: CytoDataFrame_type, image_cols: List[str]
     ) -> Dict[str, str]:
         """
-        Find columns containing image path names
+        Gather data containing image path names
         (the directory storing the images but not the file
         names). We do this by seeking the pattern:
         Image_FileName_X --> Image_PathName_X.
@@ -432,10 +444,41 @@ class CytoDataFrame(pd.DataFrame):
 
         """
 
+        image_path_columns = [
+            col.replace("FileName", "PathName")
+            for col in image_cols
+            if col.replace("FileName", "PathName") in self.columns
+        ]
+
+        return self.filter(items=image_path_columns) if image_path_columns else None
+
+    def find_image_path_columns(
+        self: CytoDataFrame_type, image_cols: List[str], all_cols: List[str]
+    ) -> Dict[str, str]:
+        """
+        Find columns containing image path names
+        (the directory storing the images but not the file
+        names). We do this by seeking the pattern:
+        Image_FileName_X --> Image_PathName_X.
+
+        Args:
+            image_cols: List[str]:
+                A list of column names that contain
+                image file names.
+            all_cols: List[str]:
+                A list of all column names.
+
+        Returns:
+            Dict[str, str]:
+                A list of column names that contain
+                image file names.
+
+        """
+
         return {
             col: col.replace("FileName", "PathName")
             for col in image_cols
-            if col.replace("FileName", "PathName") in self.columns
+            if col.replace("FileName", "PathName") in all_cols
         }
 
     def search_for_mask_or_outline(  # noqa: PLR0913, PLR0911
@@ -541,8 +584,20 @@ class CytoDataFrame(pd.DataFrame):
 
         # Step 1: Find the candidate file if the data value is not already a file
         if not pathlib.Path(data_value).is_file():
+            # determine if we have a file from the path (dir) + filename
+            if (
+                self._custom_attrs["data_context_dir"] is None
+                and image_path is not None
+                and (
+                    existing_image_from_path := pathlib.Path(
+                        f"{image_path}/{data_value}"
+                    )
+                ).is_file()
+            ):
+                candidate_path = existing_image_from_path
+
             # Search for the data value in the data context directory
-            if self._custom_attrs["data_context_dir"] is not None and (
+            elif self._custom_attrs["data_context_dir"] is not None and (
                 candidate_paths := list(
                     pathlib.Path(self._custom_attrs["data_context_dir"]).rglob(
                         data_value
@@ -551,25 +606,25 @@ class CytoDataFrame(pd.DataFrame):
             ):
                 # If a candidate file is found, use the first one
                 candidate_path = candidate_paths[0]
-                orig_image_array = skimage.io.imread(candidate_path)
-
-                # Adjust the image with image adjustment callable
-                # or adaptive histogram equalization
-                if self._custom_attrs["image_adjustment"] is not None:
-                    orig_image_array = self._custom_attrs["image_adjustment"](
-                        orig_image_array
-                    )
-                else:
-                    orig_image_array = adjust_with_adaptive_histogram_equalization(
-                        orig_image_array
-                    )
-
-                # Normalize to 0-255 for image saving
-                orig_image_array = img_as_ubyte(orig_image_array)
 
             else:
                 # If no candidate file is found, return the original data value
                 return data_value
+
+        # read the image as an array
+        orig_image_array = skimage.io.imread(candidate_path)
+
+        # Adjust the image with image adjustment callable
+        # or adaptive histogram equalization
+        if self._custom_attrs["image_adjustment"] is not None:
+            orig_image_array = self._custom_attrs["image_adjustment"](orig_image_array)
+        else:
+            orig_image_array = adjust_with_adaptive_histogram_equalization(
+                orig_image_array
+            )
+
+        # Normalize to 0-255 for image saving
+        orig_image_array = img_as_ubyte(orig_image_array)
 
         prepared_image = None
         # Step 2: Search for a mask
@@ -682,11 +737,6 @@ class CytoDataFrame(pd.DataFrame):
             max_cols = get_option("display.max_columns")
             show_dimensions = get_option("display.show_dimensions")
 
-            # determine if we have image_cols to display
-        if image_cols := self.find_image_columns():
-            # attempt to find the image path columns
-            image_path_cols = self.find_image_path_columns(image_cols=image_cols)
-
             # re-add bounding box cols if they are no longer available as in cases
             # of masking or accessing various pandas attr's
             bounding_box_externally_joined = False
@@ -699,6 +749,25 @@ class CytoDataFrame(pd.DataFrame):
                 bounding_box_externally_joined = True
             else:
                 data = self.copy()
+
+            # re-add image path (dirs for images) cols if they are no
+            # longer available as in cases of masking or accessing
+            # various pandas attr's
+            image_paths_externally_joined = False
+
+            if self._custom_attrs["data_image_paths"] is not None and not all(
+                col in self.columns.tolist()
+                for col in self._custom_attrs["data_image_paths"].columns.tolist()
+            ):
+                data = data.join(other=self._custom_attrs["data_image_paths"])
+                image_paths_externally_joined = True
+
+                # determine if we have image_cols to display
+            if image_cols := self.find_image_columns():
+                # attempt to find the image path columns
+                image_path_cols = self.find_image_path_columns(
+                    image_cols=image_cols, all_cols=data.columns
+                )
 
             # gather indices which will be displayed based on pandas configuration
             display_indices = self.get_displayed_rows()
@@ -747,7 +816,7 @@ class CytoDataFrame(pd.DataFrame):
                         # set the image path based on the image_path cols.
                         image_path=(
                             row[image_path_cols[image_col]]
-                            if image_path_cols is not None
+                            if image_path_cols is not None and image_path_cols != {}
                             else None
                         ),
                     ),
@@ -757,6 +826,11 @@ class CytoDataFrame(pd.DataFrame):
             if bounding_box_externally_joined:
                 data = data.drop(
                     self._custom_attrs["data_bounding_box"].columns.tolist(), axis=1
+                )
+
+            if image_paths_externally_joined:
+                data = data.drop(
+                    self._custom_attrs["data_image_paths"].columns.tolist(), axis=1
                 )
 
             formatter = fmt.DataFrameFormatter(

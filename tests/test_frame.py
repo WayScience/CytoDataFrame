@@ -108,7 +108,7 @@ def test_cytodataframe_input(
 def test_repr_html(
     cytotable_NF1_data_parquet_shrunken: str,
     cytotable_nuclear_speckles_data_parquet: str,
-    cytotable_pediatric_cancer_atlas_parquet_parquet: str,
+    cytotable_pediatric_cancer_atlas_parquet: str,
 ):
     """
     Tests how images are rendered through customized repr_html in CytoDataFrame.
@@ -133,8 +133,6 @@ def test_repr_html(
     nf1_dataset_with_modified_image_paths.loc[
         :, ["Image_PathName_DAPI", "Image_PathName_GFP", "Image_PathName_RFP"]
     ] = f"{pathlib.Path(cytotable_NF1_data_parquet_shrunken).parent}/Plate_2_images"
-
-    print(type(nf1_dataset_with_modified_image_paths))
 
     assert cytodataframe_image_display_contains_green_pixels(
         frame=CytoDataFrame(
@@ -163,9 +161,9 @@ def test_repr_html(
     # when context dirs are set for the pediatric cancer dataset.
     assert cytodataframe_image_display_contains_green_pixels(
         frame=CytoDataFrame(
-            data=cytotable_pediatric_cancer_atlas_parquet_parquet,
-            data_context_dir=f"{pathlib.Path(cytotable_pediatric_cancer_atlas_parquet_parquet).parent}/images/orig",
-            data_outline_context_dir=f"{pathlib.Path(cytotable_pediatric_cancer_atlas_parquet_parquet).parent}/images/outlines",
+            data=cytotable_pediatric_cancer_atlas_parquet,
+            data_context_dir=f"{pathlib.Path(cytotable_pediatric_cancer_atlas_parquet).parent}/images/orig",
+            data_outline_context_dir=f"{pathlib.Path(cytotable_pediatric_cancer_atlas_parquet).parent}/images/outlines",
             segmentation_file_regex={
                 r"CellsOutlines_BR(\d+)_C(\d{2})_\d+\.tiff": r".*ch3.*\.tiff",
                 r"NucleiOutlines_BR(\d+)_C(\d{2})_\d+\.tiff": r".*ch5.*\.tiff",
@@ -181,22 +179,25 @@ def test_repr_html(
     # when context dirs are NOT set for the pediatric cancer dataset.
     # (tests the regex associations with default image paths)
     pediatric_cancer_dataset_with_modified_image_paths = pd.read_parquet(
-        path=cytotable_NF1_data_parquet_shrunken
+        path=cytotable_pediatric_cancer_atlas_parquet
     )
-    pediatric_cancer_dataset_with_modified_image_paths.loc[
-        :,
-        [
-            "Image_PathName_OrigAGP",
-            "Image_PathName_OrigDNA",
-        ],
-    ] = (
-        f"{pathlib.Path(cytotable_pediatric_cancer_atlas_parquet_parquet).parent}/images/orig",
+    # fmt: off
+    pediatric_cancer_dataset_with_modified_image_paths = (
+        pediatric_cancer_dataset_with_modified_image_paths.assign(
+        Image_PathName_OrigAGP=(
+            f"{pathlib.Path(cytotable_pediatric_cancer_atlas_parquet).parent}/images/orig"
+        ),
+        Image_PathName_OrigDNA=(
+            f"{pathlib.Path(cytotable_pediatric_cancer_atlas_parquet).parent}/images/orig"
+        ),
     )
+    )
+    # fmt: on
 
     assert cytodataframe_image_display_contains_green_pixels(
         frame=CytoDataFrame(
             data=pediatric_cancer_dataset_with_modified_image_paths,
-            data_outline_context_dir=f"{pathlib.Path(cytotable_pediatric_cancer_atlas_parquet_parquet).parent}/images/outlines",
+            data_outline_context_dir=f"{pathlib.Path(cytotable_pediatric_cancer_atlas_parquet).parent}/images/outlines",
             segmentation_file_regex={
                 r"CellsOutlines_BR(\d+)_C(\d{2})_\d+\.tiff": r".*ch3.*\.tiff",
                 r"NucleiOutlines_BR(\d+)_C(\d{2})_\d+\.tiff": r".*ch5.*\.tiff",
