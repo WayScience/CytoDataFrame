@@ -42,7 +42,7 @@ def fixture_cytotable_nuclear_speckle_data_parquet():
     return "tests/data/cytotable/nuclear_speckles/test_slide1_converted.parquet"
 
 
-@pytest.fixture(name="cytotable_pediatric_cancer_atlas_parquet_parquet")
+@pytest.fixture(name="cytotable_pediatric_cancer_atlas_parquet")
 def fixture_pediatric_cancer_atlas_data_parquet():
     """
     Return df to test CytoTable pediatric cancer atlas data through
