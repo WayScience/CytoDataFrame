@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.16.4
+#       jupytext_version: 1.16.6
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -22,6 +22,10 @@
 # visual information which can be viewed directly in a Jupyter notebook.
 
 # +
+import pathlib
+
+import pandas as pd
+
 from cytodataframe.frame import CytoDataFrame
 
 # create paths for use with CytoDataFrames below
@@ -45,7 +49,9 @@ CytoDataFrame(
         "Image_FileName_OrigDNA",
         "Image_FileName_OrigRNA",
     ]
-][:3]
+][
+    :3
+]
 
 # %%time
 # view JUMP plate BR00117006 with images and overlaid outlines for segmentation
@@ -61,7 +67,9 @@ CytoDataFrame(
         "Image_FileName_OrigDNA",
         "Image_FileName_OrigRNA",
     ]
-][:3]
+][
+    :3
+]
 
 
 # %%time
@@ -77,7 +85,9 @@ CytoDataFrame(
         "Image_FileName_RFP",
         "Image_FileName_DAPI",
     ]
-][:3]
+][
+    :3
+]
 
 # %%time
 # view NF1 Cell Painting data with images and overlaid outlines from masks
@@ -93,7 +103,40 @@ CytoDataFrame(
         "Image_FileName_RFP",
         "Image_FileName_DAPI",
     ]
-][:3]
+][
+    :3
+]
+
+# +
+# %%time
+# add active paths on the local system to show how CytoDataFrame
+# may be used without specifying a context directory for images.
+# Note: normally these paths are local to the system where the
+# profile data was generated, which often is not the same as the
+# system which will be used to analyze the data.
+parquet_path = f"{nf1_cellpainting_path}/Plate_2_with_image_data_shrunken.parquet"
+nf1_dataset_with_modified_image_paths = pd.read_parquet(path=parquet_path)
+nf1_dataset_with_modified_image_paths.loc[
+    :, ["Image_PathName_DAPI", "Image_PathName_GFP", "Image_PathName_RFP"]
+] = f"{pathlib.Path(parquet_path).parent}/Plate_2_images"
+
+# view NF1 Cell Painting data with images and overlaid outlines from masks
+CytoDataFrame(
+    # note: we can read directly from an existing Pandas DataFrame
+    data=nf1_dataset_with_modified_image_paths,
+    data_mask_context_dir=f"{nf1_cellpainting_path}/Plate_2_masks",
+)[
+    [
+        "Metadata_ImageNumber",
+        "Metadata_Cells_Number_Object_Number",
+        "Image_FileName_GFP",
+        "Image_FileName_RFP",
+        "Image_FileName_DAPI",
+    ]
+][
+    :3
+]
+# -
 
 # %%time
 # view nuclear speckles data with images and overlaid outlines from masks
@@ -109,7 +152,9 @@ CytoDataFrame(
         "Image_FileName_DAPI",
         "Image_FileName_GOLD",
     ]
-][:3]
+][
+    :3
+]
 
 # %%time
 # view ALSF pediatric cancer atlas plate BR00143976 with images
@@ -128,4 +173,6 @@ CytoDataFrame(
         "Image_FileName_OrigAGP",
         "Image_FileName_OrigDNA",
     ]
-][:3]
+][
+    :3
+]
