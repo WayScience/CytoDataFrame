@@ -15,8 +15,8 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
   </script>
-  <!-- 
-    this give us a css class that will be invisible only if js is disabled 
+  <!--
+    this give us a css class that will be invisible only if js is disabled
   -->
   <noscript>
     <style>
@@ -26,18 +26,18 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
-<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=76a74e97" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
-<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../../../_static/doctools.js?v=9a2dae69"></script>
@@ -158,7 +158,9 @@
 </li>
 
             <li class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="pst-nav-more-links">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
                     More
                 </button>
                 <ul id="pst-nav-more-links" class="dropdown-menu">
@@ -340,9 +342,14 @@
   
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
   </div>
-  
-  <div id="rtd-footer-container"></div>
 
 
       </div>
@@ -460,6 +467,7 @@
         <span class="bp">self</span><span class="p">:</span> <span class="n">CytoDataFrame_type</span><span class="p">,</span>
         <span class="n">data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">CytoDataFrame_type</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">],</span>
         <span class="n">data_context_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">data_image_paths</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">data_bounding_box</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">data_mask_context_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">data_outline_context_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -475,6 +483,8 @@
 <span class="sd">                The data source, either a pandas DataFrame or a file path.</span>
 <span class="sd">            data_context_dir (Optional[str]):</span>
 <span class="sd">                Directory context for the image data within the DataFrame.</span>
+<span class="sd">            data_image_paths (Optional[pd.DataFrame]):</span>
+<span class="sd">                Image path data for the image files.</span>
 <span class="sd">            data_bounding_box (Optional[pd.DataFrame]):</span>
 <span class="sd">                Bounding box data for the DataFrame images.</span>
 <span class="sd">            data_mask_context_dir: Optional[str]:</span>
@@ -501,6 +511,7 @@
             <span class="s2">&quot;data_context_dir&quot;</span><span class="p">:</span> <span class="p">(</span>
                 <span class="n">data_context_dir</span> <span class="k">if</span> <span class="n">data_context_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
             <span class="p">),</span>
+            <span class="s2">&quot;data_image_paths&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
             <span class="s2">&quot;data_bounding_box&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
             <span class="s2">&quot;data_mask_context_dir&quot;</span><span class="p">:</span> <span class="p">(</span>
                 <span class="n">data_mask_context_dir</span> <span class="k">if</span> <span class="n">data_mask_context_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
@@ -561,11 +572,17 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">data_bounding_box</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_bounding_box&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_bounding_box_from_data</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_bounding_box&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_bounding_box_from_data</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">data_bounding_box</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">data_bounding_box</span>
+        <span class="p">)</span>
 
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_bounding_box&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data_bounding_box</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_image_paths&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_image_paths_from_data</span><span class="p">(</span><span class="n">image_cols</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">find_image_columns</span><span class="p">())</span>
+            <span class="k">if</span> <span class="n">data_image_paths</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">data_image_paths</span>
+        <span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">CytoDataFrame_type</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>  <span class="c1"># noqa: ANN401</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -589,6 +606,7 @@
             <span class="k">return</span> <span class="n">CytoDataFrame</span><span class="p">(</span>
                 <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">key</span><span class="p">),</span>
                 <span class="n">data_context_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_context_dir&quot;</span><span class="p">],</span>
+                <span class="n">data_image_paths</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_image_paths&quot;</span><span class="p">],</span>
                 <span class="n">data_bounding_box</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_bounding_box&quot;</span><span class="p">],</span>
                 <span class="n">data_mask_context_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_mask_context_dir&quot;</span><span class="p">],</span>
                 <span class="n">data_outline_context_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_outline_context_dir&quot;</span><span class="p">],</span>
@@ -628,6 +646,7 @@
             <span class="n">result</span> <span class="o">=</span> <span class="n">CytoDataFrame</span><span class="p">(</span>
                 <span class="n">result</span><span class="p">,</span>
                 <span class="n">data_context_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_context_dir&quot;</span><span class="p">],</span>
+                <span class="n">data_image_paths</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_image_paths&quot;</span><span class="p">],</span>
                 <span class="n">data_bounding_box</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_bounding_box&quot;</span><span class="p">],</span>
                 <span class="n">data_mask_context_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_mask_context_dir&quot;</span><span class="p">],</span>
                 <span class="n">data_outline_context_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_outline_context_dir&quot;</span><span class="p">],</span>
@@ -791,8 +810,25 @@
 
 <div class="viewcode-block" id="CytoDataFrame.find_image_columns">
 <a class="viewcode-back" href="../../../python-api.html#src.cytodataframe.frame.CytoDataFrame.find_image_columns">[docs]</a>
-    <span class="k">def</span> <span class="nf">find_image_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">CytoDataFrame_type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">find_image_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">CytoDataFrame_type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Find columns containing image file names.</span>
+
+<span class="sd">        This method searches for columns in the DataFrame</span>
+<span class="sd">        that contain image file names with extensions .tif</span>
+<span class="sd">        or .tiff (case insensitive).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List[str]:</span>
+<span class="sd">                A list of column names that contain</span>
+<span class="sd">                image file names.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># build a pattern to match image file names</span>
         <span class="n">pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;.*\.(tif|tiff)$&quot;</span>
+
+        <span class="c1"># search for columns containing image file names</span>
+        <span class="c1"># based on pattern above.</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="n">column</span>
             <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span>
@@ -803,6 +839,70 @@
             <span class="p">)</span>
             <span class="o">.</span><span class="n">any</span><span class="p">()</span>
         <span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="CytoDataFrame.get_image_paths_from_data">
+<a class="viewcode-back" href="../../../python-api.html#src.cytodataframe.frame.CytoDataFrame.get_image_paths_from_data">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_image_paths_from_data</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">:</span> <span class="n">CytoDataFrame_type</span><span class="p">,</span> <span class="n">image_cols</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gather data containing image path names</span>
+<span class="sd">        (the directory storing the images but not the file</span>
+<span class="sd">        names). We do this by seeking the pattern:</span>
+<span class="sd">        Image_FileName_X --&gt; Image_PathName_X.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            image_cols: List[str]:</span>
+<span class="sd">                A list of column names that contain</span>
+<span class="sd">                image file names.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dict[str, str]:</span>
+<span class="sd">                A list of column names that contain</span>
+<span class="sd">                image file names.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">image_path_columns</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">col</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;FileName&quot;</span><span class="p">,</span> <span class="s2">&quot;PathName&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">image_cols</span>
+            <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;FileName&quot;</span><span class="p">,</span> <span class="s2">&quot;PathName&quot;</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span>
+        <span class="p">]</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">items</span><span class="o">=</span><span class="n">image_path_columns</span><span class="p">)</span> <span class="k">if</span> <span class="n">image_path_columns</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="CytoDataFrame.find_image_path_columns">
+<a class="viewcode-back" href="../../../python-api.html#src.cytodataframe.frame.CytoDataFrame.find_image_path_columns">[docs]</a>
+    <span class="k">def</span> <span class="nf">find_image_path_columns</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">:</span> <span class="n">CytoDataFrame_type</span><span class="p">,</span> <span class="n">image_cols</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">all_cols</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Find columns containing image path names</span>
+<span class="sd">        (the directory storing the images but not the file</span>
+<span class="sd">        names). We do this by seeking the pattern:</span>
+<span class="sd">        Image_FileName_X --&gt; Image_PathName_X.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            image_cols: List[str]:</span>
+<span class="sd">                A list of column names that contain</span>
+<span class="sd">                image file names.</span>
+<span class="sd">            all_cols: List[str]:</span>
+<span class="sd">                A list of all column names.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dict[str, str]:</span>
+<span class="sd">                A list of column names that contain</span>
+<span class="sd">                image file names.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="n">col</span><span class="p">:</span> <span class="n">col</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;FileName&quot;</span><span class="p">,</span> <span class="s2">&quot;PathName&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">image_cols</span>
+            <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;FileName&quot;</span><span class="p">,</span> <span class="s2">&quot;PathName&quot;</span><span class="p">)</span> <span class="ow">in</span> <span class="n">all_cols</span>
+        <span class="p">}</span></div>
 
 
 <div class="viewcode-block" id="CytoDataFrame.search_for_mask_or_outline">
@@ -887,6 +987,7 @@
         <span class="bp">self</span><span class="p">:</span> <span class="n">CytoDataFrame_type</span><span class="p">,</span>
         <span class="n">data_value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>  <span class="c1"># noqa: ANN401</span>
         <span class="n">bounding_box</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+        <span class="n">image_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Process the image data based on the provided data value</span>
@@ -905,37 +1006,54 @@
 <span class="sd">                The HTML image display string, or the unmodified data</span>
 <span class="sd">                value if the image cannot be processed.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="n">candidate_path</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="c1"># Get the pattern map for segmentation file regex</span>
         <span class="n">pattern_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;segmentation_file_regex&quot;</span><span class="p">)</span>
 
         <span class="c1"># Step 1: Find the candidate file if the data value is not already a file</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">data_value</span><span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="c1"># determine if we have a file from the path (dir) + filename</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_context_dir&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="n">image_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="p">(</span>
+                    <span class="n">existing_image_from_path</span> <span class="o">:=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">image_path</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">data_value</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span>
+            <span class="p">):</span>
+                <span class="n">candidate_path</span> <span class="o">=</span> <span class="n">existing_image_from_path</span>
+
             <span class="c1"># Search for the data value in the data context directory</span>
-            <span class="k">if</span> <span class="n">candidate_paths</span> <span class="o">:=</span> <span class="nb">list</span><span class="p">(</span>
-                <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_context_dir&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="n">data_value</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_context_dir&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span>
+                <span class="n">candidate_paths</span> <span class="o">:=</span> <span class="nb">list</span><span class="p">(</span>
+                    <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_context_dir&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span>
+                        <span class="n">data_value</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
             <span class="p">):</span>
                 <span class="c1"># If a candidate file is found, use the first one</span>
                 <span class="n">candidate_path</span> <span class="o">=</span> <span class="n">candidate_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-                <span class="n">orig_image_array</span> <span class="o">=</span> <span class="n">skimage</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">candidate_path</span><span class="p">)</span>
-
-                <span class="c1"># Adjust the image with image adjustment callable</span>
-                <span class="c1"># or adaptive histogram equalization</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;image_adjustment&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">orig_image_array</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;image_adjustment&quot;</span><span class="p">](</span>
-                        <span class="n">orig_image_array</span>
-                    <span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">orig_image_array</span> <span class="o">=</span> <span class="n">adjust_with_adaptive_histogram_equalization</span><span class="p">(</span>
-                        <span class="n">orig_image_array</span>
-                    <span class="p">)</span>
-
-                <span class="c1"># Normalize to 0-255 for image saving</span>
-                <span class="n">orig_image_array</span> <span class="o">=</span> <span class="n">img_as_ubyte</span><span class="p">(</span><span class="n">orig_image_array</span><span class="p">)</span>
 
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># If no candidate file is found, return the original data value</span>
                 <span class="k">return</span> <span class="n">data_value</span>
+
+        <span class="c1"># read the image as an array</span>
+        <span class="n">orig_image_array</span> <span class="o">=</span> <span class="n">skimage</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">candidate_path</span><span class="p">)</span>
+
+        <span class="c1"># Adjust the image with image adjustment callable</span>
+        <span class="c1"># or adaptive histogram equalization</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;image_adjustment&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">orig_image_array</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;image_adjustment&quot;</span><span class="p">](</span><span class="n">orig_image_array</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">orig_image_array</span> <span class="o">=</span> <span class="n">adjust_with_adaptive_histogram_equalization</span><span class="p">(</span>
+                <span class="n">orig_image_array</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Normalize to 0-255 for image saving</span>
+        <span class="n">orig_image_array</span> <span class="o">=</span> <span class="n">img_as_ubyte</span><span class="p">(</span><span class="n">orig_image_array</span><span class="p">)</span>
 
         <span class="n">prepared_image</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="c1"># Step 2: Search for a mask</span>
@@ -1054,8 +1172,6 @@
             <span class="n">max_cols</span> <span class="o">=</span> <span class="n">get_option</span><span class="p">(</span><span class="s2">&quot;display.max_columns&quot;</span><span class="p">)</span>
             <span class="n">show_dimensions</span> <span class="o">=</span> <span class="n">get_option</span><span class="p">(</span><span class="s2">&quot;display.show_dimensions&quot;</span><span class="p">)</span>
 
-            <span class="c1"># determine if we have image_cols to display</span>
-        <span class="k">if</span> <span class="n">image_cols</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_image_columns</span><span class="p">():</span>
             <span class="c1"># re-add bounding box cols if they are no longer available as in cases</span>
             <span class="c1"># of masking or accessing various pandas attr&#39;s</span>
             <span class="n">bounding_box_externally_joined</span> <span class="o">=</span> <span class="kc">False</span>
@@ -1068,6 +1184,25 @@
                 <span class="n">bounding_box_externally_joined</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+            <span class="c1"># re-add image path (dirs for images) cols if they are no</span>
+            <span class="c1"># longer available as in cases of masking or accessing</span>
+            <span class="c1"># various pandas attr&#39;s</span>
+            <span class="n">image_paths_externally_joined</span> <span class="o">=</span> <span class="kc">False</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_image_paths&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span>
+                <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_image_paths&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="p">):</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">other</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_image_paths&quot;</span><span class="p">])</span>
+                <span class="n">image_paths_externally_joined</span> <span class="o">=</span> <span class="kc">True</span>
+
+                <span class="c1"># determine if we have image_cols to display</span>
+            <span class="k">if</span> <span class="n">image_cols</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_image_columns</span><span class="p">():</span>
+                <span class="c1"># attempt to find the image path columns</span>
+                <span class="n">image_path_cols</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_image_path_columns</span><span class="p">(</span>
+                    <span class="n">image_cols</span><span class="o">=</span><span class="n">image_cols</span><span class="p">,</span> <span class="n">all_cols</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span>
+                <span class="p">)</span>
 
             <span class="c1"># gather indices which will be displayed based on pandas configuration</span>
             <span class="n">display_indices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_displayed_rows</span><span class="p">()</span>
@@ -1113,6 +1248,12 @@
                                 <span class="p">)</span>
                             <span class="p">],</span>
                         <span class="p">),</span>
+                        <span class="c1"># set the image path based on the image_path cols.</span>
+                        <span class="n">image_path</span><span class="o">=</span><span class="p">(</span>
+                            <span class="n">row</span><span class="p">[</span><span class="n">image_path_cols</span><span class="p">[</span><span class="n">image_col</span><span class="p">]]</span>
+                            <span class="k">if</span> <span class="n">image_path_cols</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">image_path_cols</span> <span class="o">!=</span> <span class="p">{}</span>
+                            <span class="k">else</span> <span class="kc">None</span>
+                        <span class="p">),</span>
                     <span class="p">),</span>
                     <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                 <span class="p">)</span>
@@ -1120,6 +1261,11 @@
             <span class="k">if</span> <span class="n">bounding_box_externally_joined</span><span class="p">:</span>
                 <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_bounding_box&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+                <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">image_paths_externally_joined</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_image_paths&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
                 <span class="p">)</span>
 
             <span class="n">formatter</span> <span class="o">=</span> <span class="n">fmt</span><span class="o">.</span><span class="n">DataFrameFormatter</span><span class="p">(</span>
@@ -1179,8 +1325,8 @@
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
-<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -1217,7 +1363,8 @@
       
         <div class="footer-item">
 <p class="theme-version">
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.0.
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
 </p></div>
       
     </div>
