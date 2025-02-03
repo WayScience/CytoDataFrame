@@ -5,6 +5,7 @@
 ![Coverage Status](https://raw.githubusercontent.com/WayScience/CytoDataFrame/main/media/coverage-badge.svg)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
+[![Software DOI badge](https://zenodo.org/badge/DOI/10.5281/zenodo.14797074.svg)](https://doi.org/10.5281/zenodo.14797074)
 
 ![](https://raw.githubusercontent.com/WayScience/coSMicQC/refs/heads/main/docs/presentations/2024-09-18-SBI2-Conference/images/cosmicqc-example-cytodataframe.png)
 _CytoDataFrame extends Pandas functionality to help display single-cell profile data alongside related images._
