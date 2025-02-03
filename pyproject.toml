@@ -49,7 +49,7 @@ coverage = "^7.6.0"
 jupyterlab = "^4.3.0"
 jupytext = "^1.16.4"
 black = ">=24.10,<26.0"
-isort = "^5.13.2"
+isort = ">=5.13.2,<7.0.0"
 jupyterlab-code-formatter = "^3.0.2"
 duckdb = "^1.1.3"
 
