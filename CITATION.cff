@@ -18,6 +18,10 @@ authors:
     family-names: Way
     orcid: 'https://orcid.org/0000-0002-0503-9348'
 repository-code: 'https://github.com/WayScience/CytoDataFrame'
+identifiers:
+  - description: Software DOI
+    type: doi
+    value: "10.5281/zenodo.14797074"
 abstract: >-
   An in-memory data analysis format for single-cell profiles alongside their corresponding images and segmentation masks.
 keywords:
