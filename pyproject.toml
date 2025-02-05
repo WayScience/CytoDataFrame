@@ -11,6 +11,9 @@ license = "BSD-3-Clause"
 readme = "README.md"
 packages = [ { include = "cytodataframe", from = "src" } ]
 
+[tool.poetry.requires-plugins]
+poetry-dynamic-versioning = { version = ">=1.0.0,<2.0.0", extras = [ "plugin" ] }
+
 [tool.poetry.dependencies]
 python = ">=3.9,<3.13"
 # used for data management
@@ -73,7 +76,7 @@ style = "pep440"
 vcs = "git"
 
 [tool.poetry-dynamic-versioning.substitution]
-files = [ "src/CytoDataFrame/__init__.py" ]
+files = [ "src/cytodataframe/__init__.py" ]
 
 # defines various development tasks
 

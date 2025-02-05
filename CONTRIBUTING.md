@@ -1,3 +1,3 @@
 # Contributing
 
-Please see our [contributing](https://WayScience.github.io/CytoDataFrame/main/contributing) documentation for more details on contributions, development, and testing.
+Please see our [contributing](docs/src/contributing.md) documentation for more details on contributions, development, and testing.
