@@ -109,9 +109,9 @@ def test_draw_outline_on_image_from_outline(
     if expected_non_black_mask:
         assert np.any(non_black_mask), "Expected a non-black outline but got none."
     else:
-        assert not np.any(
-            non_black_mask
-        ), "Expected no outline but got a non-black area."
+        assert not np.any(non_black_mask), (
+            "Expected no outline but got a non-black area."
+        )
 
 
 @pytest.mark.parametrize(
@@ -220,6 +220,6 @@ def test_adjust_with_adaptive_histogram_equalization(
         # Test if the function processes the image and
         # returns a result with the expected shape
         result = adjust_with_adaptive_histogram_equalization(input_image)
-        assert (
-            result.shape == expected_shape
-        ), f"Expected shape {expected_shape}, but got {result.shape}"
+        assert result.shape == expected_shape, (
+            f"Expected shape {expected_shape}, but got {result.shape}"
+        )

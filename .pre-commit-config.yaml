@@ -3,30 +3,30 @@
 default_language_version:
   python: python3.11
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
+-   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
         exclude: |
           (?x)^(
               .*\.svg
           )$
-      - id: check-yaml
-      - id: check-added-large-files
-      - id: detect-private-key
-  - repo: https://github.com/python-poetry/poetry
-    rev: "1.8.0"
+    -   id: check-yaml
+    -   id: check-added-large-files
+    -   id: detect-private-key
+-   repo: https://github.com/python-poetry/poetry
+    rev: "2.0.1"
     hooks:
-      - id: poetry-check
-  - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: "2.4.3"
+    -   id: poetry-check
+-   repo: https://github.com/tox-dev/pyproject-fmt
+    rev: "v2.5.0"
     hooks:
-      - id: pyproject-fmt
-  - repo: https://github.com/codespell-project/codespell
-    rev: v2.3.0
+    -   id: pyproject-fmt
+-   repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
     hooks:
-      - id: codespell
+    -   id: codespell
         exclude: |
           (?x)^(
               .*\.lock |
@@ -34,40 +34,46 @@ repos:
               .*\.ipynb |
               .*\.cppipe
           )$
-  - repo: https://github.com/executablebooks/mdformat
+-   repo: https://github.com/executablebooks/mdformat
     rev: 0.7.18
     hooks:
-      - id: mdformat
+    -   id: mdformat
         additional_dependencies:
-          - mdformat-gfm
-  - repo: https://github.com/citation-file-format/cffconvert
+        -   mdformat-gfm
+-   repo: https://github.com/citation-file-format/cffconvert
     rev: b6045d78aac9e02b039703b030588d54d53262ac
     hooks:
-      - id: validate-cff
-  - repo: https://github.com/adrienverge/yamllint
+    -   id: validate-cff
+-   repo: https://github.com/adrienverge/yamllint
     rev: v1.35.1
     hooks:
-      - id: yamllint
-  - repo: https://github.com/rhysd/actionlint
-    rev: v1.7.3
+    -   id: yamllint
+        exclude: pre-commit-config.yaml
+-   repo: https://github.com/rhysd/actionlint
+    rev: v1.7.7
     hooks:
-      - id: actionlint
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.7.0"
+    -   id: actionlint
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: "v0.9.4"
     hooks:
-      - id: ruff-format
-      - id: ruff
-  - repo: local
+    -   id: ruff-format
+    -   id: ruff
+-   repo: https://gitlab.com/vojko.pribudic.foss/pre-commit-update
+    rev: v0.6.0
     hooks:
-      - id: code-cov-gen
+    -   id: pre-commit-update
+        args: ["--keep", "mdformat", "--keep", "pre-commit-update", "--keep", "cffconvert"]
+-   repo: local
+    hooks:
+    -   id: code-cov-gen
         name: Generate code coverage
         language: system
         entry: poetry run coverage run -m pytest
         pass_filenames: false
         always_run: true
-  - repo: https://github.com/Weird-Sheep-Labs/coverage-pre-commit
+-   repo: https://github.com/Weird-Sheep-Labs/coverage-pre-commit
     rev: 0.1.1
     hooks:
-      - id: coverage-xml
-      - id: coverage-badge
+    -   id: coverage-xml
+    -   id: coverage-badge
         args: ["-o", "media/coverage-badge.svg"]
