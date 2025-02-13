@@ -188,6 +188,10 @@ class CytoDataFrame(pd.DataFrame):
             else data_image_paths
         )
 
+        # Wrap methods so they return CytoDataFrames
+        # instead of Pandas DataFrames.
+        self._wrap_methods()
+
     def __getitem__(self: CytoDataFrame_type, key: Union[int, str]) -> Any:  # noqa: ANN401
         """
         Returns an element or a slice of the underlying pandas DataFrame.
@@ -257,33 +261,70 @@ class CytoDataFrame(pd.DataFrame):
             )
         return result
 
-    def sort_values(
-        self: CytoDataFrame_type, *args: Tuple[Any, ...], **kwargs: Dict[str, Any]
-    ) -> CytoDataFrame_type:
+    def _wrap_method(self: CytoDataFrame_type, method_name: str) -> Callable:
         """
-        Sorts the DataFrame by the specified column(s) and returns a
-        new CytoDataFrame instance.
+        Creates a wrapper for the specified method
+        to ensure it returns a CytoDataFrame.
 
-        Note: we wrap this method within CytoDataFrame to help ensure the consistent
-        return of CytoDataFrames in the context of pd.Series (which are
-        treated separately but have specialized processing within the
-        context of sort_values).
+        This method dynamically wraps a given
+        method of the CytoDataFrame class to ensure
+        that the returned result is a CytoDataFrame
+        instance, preserving custom attributes.
 
         Args:
-            *args (Tuple[Any, ...]):
-                Positional arguments to be passed to the pandas
-                DataFrame's `sort_values` method.
-            **kwargs (Dict[str, Any]):
-                Keyword arguments to be passed to the pandas
-                DataFrame's `sort_values` method.
+            method_name (str):
+                The name of the method to wrap.
 
         Returns:
-            CytoDataFrame_type:
-                A new instance of CytoDataFrame sorted by the specified column(s).
-
+            Callable:
+                The wrapped method that ensures
+                the result is a CytoDataFrame.
         """
 
-        return self._return_cytodataframe(super().sort_values, *args, **kwargs)
+        def wrapper(*args: Tuple[Any, ...], **kwargs: Dict[str, Any]) -> Any:  # noqa: ANN401
+            """
+            Wraps the specified method to ensure
+            it returns a CytoDataFrame.
+
+            This function dynamically wraps a given
+            method of the CytoDataFrame class
+            to ensure that the returned result
+            is a CytoDataFrame instance, preserving
+            custom attributes.
+
+            Args:
+                *args (Tuple[Any, ...]):
+                    Positional arguments to be passed to the method.
+                **kwargs (Dict[str, Any]):
+                    Keyword arguments to be passed to the method.
+
+            Returns:
+                Any:
+                    The result of the method call.
+                    If the result is a pandas DataFrame,
+                    it is wrapped in a CytoDataFrame
+                    instance with additional context
+                    information (data context directory
+                    and data bounding box).
+            """
+            method = getattr(super(CytoDataFrame, self), method_name)
+            return self._return_cytodataframe(method, *args, **kwargs)
+
+        return wrapper
+
+    def _wrap_methods(self) -> None:
+        """
+        Method to wrap extended Pandas DataFrame methods
+        so they return a CytoDataFrame instead of a
+        Pandas DataFrame.
+        """
+
+        # list of methods by name from Pandas DataFrame class
+        methods_to_wrap = ["head", "tail", "sort_values"]
+
+        # set the wrapped method for the class instance
+        for method_name in methods_to_wrap:
+            setattr(self, method_name, self._wrap_method(method_name))
 
     def get_bounding_box_from_data(
         self: CytoDataFrame_type,
@@ -771,52 +812,6 @@ class CytoDataFrame(pd.DataFrame):
             end_display = self.index[-half_min_rows:].tolist()
             logging.debug("Detected display rows: %s", start_display + end_display)
             return start_display + end_display
-
-    def head(
-        self: CytoDataFrame_type, *args: List[Any], **kwargs: Dict[str, Any]
-    ) -> CytoDataFrame_type:
-        """
-        Returns the first n rows of the CytoDataFrame.
-
-        This method overrides the pandas DataFrame `head` method to ensure that
-        the returned result is a CytoDataFrame instance, preserving custom attributes.
-
-        Args:
-            *args (List[Any]):
-                Positional arguments to be passed to the pandas
-                DataFrame's `sort_values` method.
-            **kwargs (Dict[str, Any]):
-                Keyword arguments to be passed to the pandas
-                DataFrame's `sort_values` method.
-
-        Returns:
-            CytoDataFrame_type:
-                The first n rows of the CytoDataFrame.
-        """
-        return self._return_cytodataframe(super().head, *args, **kwargs)
-
-    def tail(
-        self: CytoDataFrame_type, *args: List[Any], **kwargs: Dict[str, Any]
-    ) -> CytoDataFrame_type:
-        """
-        Returns the last n rows of the CytoDataFrame.
-
-        This method overrides the pandas DataFrame `head` method to ensure that
-        the returned result is a CytoDataFrame instance, preserving custom attributes.
-
-        Args:
-            *args (List[Any]):
-                Positional arguments to be passed to the pandas
-                DataFrame's `sort_values` method.
-            **kwargs (Dict[str, Any]):
-                Keyword arguments to be passed to the pandas
-                DataFrame's `sort_values` method.
-
-        Returns:
-            CytoDataFrame_type:
-                The last n rows of the CytoDataFrame.
-        """
-        return self._return_cytodataframe(super().tail, *args, **kwargs)
 
     def _repr_html_(
         self: CytoDataFrame_type, key: Optional[Union[int, str]] = None
