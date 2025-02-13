@@ -3,12 +3,13 @@ Defines a CytoDataFrame class.
 """
 
 import base64
+import logging
 import pathlib
 import re
-from collections.abc import Callable
 from io import BytesIO, StringIO
 from typing import (
     Any,
+    Callable,
     ClassVar,
     Dict,
     List,
@@ -37,6 +38,8 @@ from .image import (
     draw_outline_on_image_from_mask,
     draw_outline_on_image_from_outline,
 )
+
+logger = logging.getLogger(__name__)
 
 # provide backwards compatibility for Self type in earlier Python versions.
 # see: https://peps.python.org/pep-0484/#annotating-instance-and-class-methods
@@ -73,6 +76,7 @@ class CytoDataFrame(pd.DataFrame):
         data_outline_context_dir: Optional[str] = None,
         segmentation_file_regex: Optional[Dict[str, str]] = None,
         image_adjustment: Optional[Callable] = None,
+        *args: Tuple[Any, ...],
         **kwargs: Dict[str, Any],
     ) -> None:
         """
@@ -184,6 +188,10 @@ class CytoDataFrame(pd.DataFrame):
             else data_image_paths
         )
 
+        # Wrap methods so they return CytoDataFrames
+        # instead of Pandas DataFrames.
+        self._wrap_methods()
+
     def __getitem__(self: CytoDataFrame_type, key: Union[int, str]) -> Any:  # noqa: ANN401
         """
         Returns an element or a slice of the underlying pandas DataFrame.
@@ -214,10 +222,10 @@ class CytoDataFrame(pd.DataFrame):
                 image_adjustment=self._custom_attrs["image_adjustment"],
             )
 
-    def _wrap_method(
+    def _return_cytodataframe(
         self: CytoDataFrame_type,
         method: Callable,
-        *args: List[Any],
+        *args: Tuple[Any, ...],
         **kwargs: Dict[str, Any],
     ) -> Any:  # noqa: ANN401
         """
@@ -227,7 +235,7 @@ class CytoDataFrame(pd.DataFrame):
         Args:
             method (Callable):
                 The method to be called and wrapped.
-            *args (List[Any]):
+            *args (Tuple[Any, ...]):
                 Positional arguments to be passed to the method.
             **kwargs (Dict[str, Any]):
                 Keyword arguments to be passed to the method.
@@ -253,33 +261,70 @@ class CytoDataFrame(pd.DataFrame):
             )
         return result
 
-    def sort_values(
-        self: CytoDataFrame_type, *args: List[Any], **kwargs: Dict[str, Any]
-    ) -> CytoDataFrame_type:
+    def _wrap_method(self: CytoDataFrame_type, method_name: str) -> Callable:
         """
-        Sorts the DataFrame by the specified column(s) and returns a
-        new CytoDataFrame instance.
+        Creates a wrapper for the specified method
+        to ensure it returns a CytoDataFrame.
 
-        Note: we wrap this method within CytoDataFrame to help ensure the consistent
-        return of CytoDataFrames in the context of pd.Series (which are
-        treated separately but have specialized processing within the
-        context of sort_values).
+        This method dynamically wraps a given
+        method of the CytoDataFrame class to ensure
+        that the returned result is a CytoDataFrame
+        instance, preserving custom attributes.
 
         Args:
-            *args (List[Any]):
-                Positional arguments to be passed to the pandas
-                DataFrame's `sort_values` method.
-            **kwargs (Dict[str, Any]):
-                Keyword arguments to be passed to the pandas
-                DataFrame's `sort_values` method.
+            method_name (str):
+                The name of the method to wrap.
 
         Returns:
-            CytoDataFrame_type:
-                A new instance of CytoDataFrame sorted by the specified column(s).
-
+            Callable:
+                The wrapped method that ensures
+                the result is a CytoDataFrame.
         """
 
-        return self._wrap_method(super().sort_values, *args, **kwargs)
+        def wrapper(*args: Tuple[Any, ...], **kwargs: Dict[str, Any]) -> Any:  # noqa: ANN401
+            """
+            Wraps the specified method to ensure
+            it returns a CytoDataFrame.
+
+            This function dynamically wraps a given
+            method of the CytoDataFrame class
+            to ensure that the returned result
+            is a CytoDataFrame instance, preserving
+            custom attributes.
+
+            Args:
+                *args (Tuple[Any, ...]):
+                    Positional arguments to be passed to the method.
+                **kwargs (Dict[str, Any]):
+                    Keyword arguments to be passed to the method.
+
+            Returns:
+                Any:
+                    The result of the method call.
+                    If the result is a pandas DataFrame,
+                    it is wrapped in a CytoDataFrame
+                    instance with additional context
+                    information (data context directory
+                    and data bounding box).
+            """
+            method = getattr(super(CytoDataFrame, self), method_name)
+            return self._return_cytodataframe(method, *args, **kwargs)
+
+        return wrapper
+
+    def _wrap_methods(self) -> None:
+        """
+        Method to wrap extended Pandas DataFrame methods
+        so they return a CytoDataFrame instead of a
+        Pandas DataFrame.
+        """
+
+        # list of methods by name from Pandas DataFrame class
+        methods_to_wrap = ["head", "tail", "sort_values"]
+
+        # set the wrapped method for the class instance
+        for method_name in methods_to_wrap:
+            setattr(self, method_name, self._wrap_method(method_name))
 
     def get_bounding_box_from_data(
         self: CytoDataFrame_type,
@@ -332,7 +377,15 @@ class CytoDataFrame(pd.DataFrame):
 
         # Assign the selected columns to self.bounding_box_df
         if selected_group:
+            logger.debug(
+                "Bounding box columns found: %s",
+                column_groups[selected_group],
+            )
             return self.filter(items=column_groups[selected_group])
+
+        logger.debug(
+            "Found no bounding box columns.",
+        )
 
         return None
 
@@ -412,7 +465,7 @@ class CytoDataFrame(pd.DataFrame):
 
         # search for columns containing image file names
         # based on pattern above.
-        return [
+        image_cols = [
             column
             for column in self.columns
             if self[column]
@@ -422,6 +475,10 @@ class CytoDataFrame(pd.DataFrame):
             )
             .any()
         ]
+
+        logger.debug("Found image columns: %s", image_cols)
+
+        return image_cols
 
     def get_image_paths_from_data(
         self: CytoDataFrame_type, image_cols: List[str]
@@ -449,6 +506,8 @@ class CytoDataFrame(pd.DataFrame):
             for col in image_cols
             if col.replace("FileName", "PathName") in self.columns
         ]
+
+        logger.debug("Found image path columns: %s", image_path_columns)
 
         return self.filter(items=image_path_columns) if image_path_columns else None
 
@@ -517,7 +576,12 @@ class CytoDataFrame(pd.DataFrame):
                 The target image with the applied mask or outline,
                 or None if no relevant file is found.
         """
+        logger.debug(
+            "Searching for %s in %s", "mask" if mask else "outline", data_value
+        )
+
         if file_dir is None:
+            logger.debug("No mask or outline directory specified.")
             return None
 
         if pattern_map is None:
@@ -525,6 +589,9 @@ class CytoDataFrame(pd.DataFrame):
                 pathlib.Path(file_dir).rglob(f"{pathlib.Path(candidate_path).stem}*")
             )
             if matching_mask_file:
+                logger.debug(
+                    "Found matching mask or outline: %s", matching_mask_file[0]
+                )
                 if mask:
                     return draw_outline_on_image_from_mask(
                         orig_image=orig_image, mask_image_path=matching_mask_file[0]
@@ -543,6 +610,11 @@ class CytoDataFrame(pd.DataFrame):
                     if re.search(file_pattern, file.name)
                 ]
                 if matching_files:
+                    logger.debug(
+                        "Found matching mask or outline using regex pattern %s : %s",
+                        file_pattern,
+                        matching_files[0],
+                    )
                     if mask:
                         return draw_outline_on_image_from_mask(
                             orig_image=orig_image, mask_image_path=matching_files[0]
@@ -551,6 +623,8 @@ class CytoDataFrame(pd.DataFrame):
                         return draw_outline_on_image_from_outline(
                             orig_image=orig_image, outline_image_path=matching_files[0]
                         )
+
+        logger.debug("No mask or outline found for: %s", data_value)
 
         return None
 
@@ -578,6 +652,16 @@ class CytoDataFrame(pd.DataFrame):
                 value if the image cannot be processed.
         """
 
+        logger.debug(
+            (
+                "Processing image data as HTML for display."
+                "Data value: %s , Bounding box: %s , Image path: %s"
+            ),
+            data_value,
+            bounding_box,
+            image_path,
+        )
+
         candidate_path = None
         # Get the pattern map for segmentation file regex
         pattern_map = self._custom_attrs.get("segmentation_file_regex")
@@ -594,6 +678,9 @@ class CytoDataFrame(pd.DataFrame):
                     )
                 ).is_file()
             ):
+                logger.debug(
+                    "Found existing image from path: %s", existing_image_from_path
+                )
                 candidate_path = existing_image_from_path
 
             # Search for the data value in the data context directory
@@ -604,10 +691,15 @@ class CytoDataFrame(pd.DataFrame):
                     )
                 )
             ):
+                logger.debug(
+                    "Found candidate paths (and attempting to use the first): %s",
+                    candidate_paths,
+                )
                 # If a candidate file is found, use the first one
                 candidate_path = candidate_paths[0]
 
             else:
+                logger.debug("No candidate file found for: %s", data_value)
                 # If no candidate file is found, return the original data value
                 return data_value
 
@@ -617,8 +709,10 @@ class CytoDataFrame(pd.DataFrame):
         # Adjust the image with image adjustment callable
         # or adaptive histogram equalization
         if self._custom_attrs["image_adjustment"] is not None:
+            logger.debug("Adjusting image with custom image adjustment function.")
             orig_image_array = self._custom_attrs["image_adjustment"](orig_image_array)
         else:
+            logger.debug("Adjusting image with adaptive histogram equalization.")
             orig_image_array = adjust_with_adaptive_histogram_equalization(
                 orig_image_array
             )
@@ -669,6 +763,8 @@ class CytoDataFrame(pd.DataFrame):
                 f"{prepared_image.shape}"
             ) from e
 
+        logger.debug("Cropped image array shape: %s", cropped_img_array.shape)
+
         # Step 6:
         try:
             # Save cropped image to buffer
@@ -680,8 +776,10 @@ class CytoDataFrame(pd.DataFrame):
 
         except (FileNotFoundError, ValueError) as exc:
             # Handle errors if image processing fails
-            print(exc)
+            logger.error(exc)
             return data_value
+
+        logger.debug("Image processed successfully and being sent to HTML for display.")
 
         # Return HTML image display as a base64-encoded PNG
         return (
@@ -690,6 +788,16 @@ class CytoDataFrame(pd.DataFrame):
         )
 
     def get_displayed_rows(self: CytoDataFrame_type) -> List[int]:
+        """
+        Get the indices of the rows that are currently
+        displayed based on the pandas display settings.
+
+        Returns:
+            List[int]:
+                A list of indices of the rows that
+                are currently displayed.
+        """
+
         # Get the current display settings
         max_rows = pd.get_option("display.max_rows")
         min_rows = pd.get_option("display.min_rows")
@@ -702,6 +810,7 @@ class CytoDataFrame(pd.DataFrame):
             half_min_rows = min_rows // 2
             start_display = self.index[:half_min_rows].tolist()
             end_display = self.index[-half_min_rows:].tolist()
+            logging.debug("Detected display rows: %s", start_display + end_display)
             return start_display + end_display
 
     def _repr_html_(
@@ -723,6 +832,7 @@ class CytoDataFrame(pd.DataFrame):
             str: The data in a pandas DataFrame.
         """
 
+        # handles DataFrame.info representations
         if self._info_repr():
             buf = StringIO()
             self.info(buf=buf)
@@ -745,6 +855,7 @@ class CytoDataFrame(pd.DataFrame):
                 col in self.columns.tolist()
                 for col in self._custom_attrs["data_bounding_box"].columns.tolist()
             ):
+                logger.debug("Re-adding bounding box columns.")
                 data = self.join(other=self._custom_attrs["data_bounding_box"])
                 bounding_box_externally_joined = True
             else:
@@ -759,6 +870,7 @@ class CytoDataFrame(pd.DataFrame):
                 col in self.columns.tolist()
                 for col in self._custom_attrs["data_image_paths"].columns.tolist()
             ):
+                logger.debug("Re-adding image path columns.")
                 data = data.join(other=self._custom_attrs["data_image_paths"])
                 image_paths_externally_joined = True
 
@@ -768,6 +880,7 @@ class CytoDataFrame(pd.DataFrame):
                 image_path_cols = self.find_image_path_columns(
                     image_cols=image_cols, all_cols=data.columns
                 )
+            logger.debug("Image columns found: %s", image_cols)
 
             # gather indices which will be displayed based on pandas configuration
             display_indices = self.get_displayed_rows()
