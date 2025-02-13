@@ -208,3 +208,16 @@ def test_repr_html(
             "Image_FileName_OrigDNA",
         ],
     ), "The pediatric cancer atlas speckles images do not contain green outlines."
+
+
+def test_return_cytodataframe(cytotable_NF1_data_parquet_shrunken: str):
+    """
+    Tests to ensure we return a CytoDataFrame
+    from extended Pandas methods.
+    """
+
+    cdf = CytoDataFrame(data=cytotable_NF1_data_parquet_shrunken)
+
+    assert isinstance(cdf.head(), CytoDataFrame)
+    assert isinstance(cdf.tail(), CytoDataFrame)
+    assert isinstance(cdf.sort_values(by="Metadata_ImageNumber"), CytoDataFrame)
