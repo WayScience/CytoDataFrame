@@ -401,12 +401,13 @@
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">base64</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">pathlib</span>
 <span class="kn">import</span> <span class="nn">re</span>
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
 <span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">BytesIO</span><span class="p">,</span> <span class="n">StringIO</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">Any</span><span class="p">,</span>
+    <span class="n">Callable</span><span class="p">,</span>
     <span class="n">ClassVar</span><span class="p">,</span>
     <span class="n">Dict</span><span class="p">,</span>
     <span class="n">List</span><span class="p">,</span>
@@ -435,6 +436,8 @@
     <span class="n">draw_outline_on_image_from_mask</span><span class="p">,</span>
     <span class="n">draw_outline_on_image_from_outline</span><span class="p">,</span>
 <span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 <span class="c1"># provide backwards compatibility for Self type in earlier Python versions.</span>
 <span class="c1"># see: https://peps.python.org/pep-0484/#annotating-instance-and-class-methods</span>
@@ -473,6 +476,7 @@
         <span class="n">data_outline_context_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">segmentation_file_regex</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">image_adjustment</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -584,6 +588,10 @@
             <span class="k">else</span> <span class="n">data_image_paths</span>
         <span class="p">)</span>
 
+        <span class="c1"># Wrap methods so they return CytoDataFrames</span>
+        <span class="c1"># instead of Pandas DataFrames.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_wrap_methods</span><span class="p">()</span>
+
     <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">CytoDataFrame_type</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>  <span class="c1"># noqa: ANN401</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns an element or a slice of the underlying pandas DataFrame.</span>
@@ -614,12 +622,12 @@
                 <span class="n">image_adjustment</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;image_adjustment&quot;</span><span class="p">],</span>
             <span class="p">)</span>
 
-<div class="viewcode-block" id="CytoDataFrame._wrap_method">
-<a class="viewcode-back" href="../../../python-api.html#src.cytodataframe.frame.CytoDataFrame._wrap_method">[docs]</a>
-    <span class="k">def</span> <span class="nf">_wrap_method</span><span class="p">(</span>
+<div class="viewcode-block" id="CytoDataFrame._return_cytodataframe">
+<a class="viewcode-back" href="../../../python-api.html#src.cytodataframe.frame.CytoDataFrame._return_cytodataframe">[docs]</a>
+    <span class="k">def</span> <span class="nf">_return_cytodataframe</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">:</span> <span class="n">CytoDataFrame_type</span><span class="p">,</span>
         <span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-        <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+        <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>  <span class="c1"># noqa: ANN401</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -629,7 +637,7 @@
 <span class="sd">        Args:</span>
 <span class="sd">            method (Callable):</span>
 <span class="sd">                The method to be called and wrapped.</span>
-<span class="sd">            *args (List[Any]):</span>
+<span class="sd">            *args (Tuple[Any, ...]):</span>
 <span class="sd">                Positional arguments to be passed to the method.</span>
 <span class="sd">            **kwargs (Dict[str, Any]):</span>
 <span class="sd">                Keyword arguments to be passed to the method.</span>
@@ -656,35 +664,75 @@
         <span class="k">return</span> <span class="n">result</span></div>
 
 
-<div class="viewcode-block" id="CytoDataFrame.sort_values">
-<a class="viewcode-back" href="../../../python-api.html#src.cytodataframe.frame.CytoDataFrame.sort_values">[docs]</a>
-    <span class="k">def</span> <span class="nf">sort_values</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">:</span> <span class="n">CytoDataFrame_type</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CytoDataFrame_type</span><span class="p">:</span>
+<div class="viewcode-block" id="CytoDataFrame._wrap_method">
+<a class="viewcode-back" href="../../../python-api.html#src.cytodataframe.frame.CytoDataFrame._wrap_method">[docs]</a>
+    <span class="k">def</span> <span class="nf">_wrap_method</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">CytoDataFrame_type</span><span class="p">,</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Sorts the DataFrame by the specified column(s) and returns a</span>
-<span class="sd">        new CytoDataFrame instance.</span>
+<span class="sd">        Creates a wrapper for the specified method</span>
+<span class="sd">        to ensure it returns a CytoDataFrame.</span>
 
-<span class="sd">        Note: we wrap this method within CytoDataFrame to help ensure the consistent</span>
-<span class="sd">        return of CytoDataFrames in the context of pd.Series (which are</span>
-<span class="sd">        treated separately but have specialized processing within the</span>
-<span class="sd">        context of sort_values).</span>
+<span class="sd">        This method dynamically wraps a given</span>
+<span class="sd">        method of the CytoDataFrame class to ensure</span>
+<span class="sd">        that the returned result is a CytoDataFrame</span>
+<span class="sd">        instance, preserving custom attributes.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            *args (List[Any]):</span>
-<span class="sd">                Positional arguments to be passed to the pandas</span>
-<span class="sd">                DataFrame&#39;s `sort_values` method.</span>
-<span class="sd">            **kwargs (Dict[str, Any]):</span>
-<span class="sd">                Keyword arguments to be passed to the pandas</span>
-<span class="sd">                DataFrame&#39;s `sort_values` method.</span>
+<span class="sd">            method_name (str):</span>
+<span class="sd">                The name of the method to wrap.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            CytoDataFrame_type:</span>
-<span class="sd">                A new instance of CytoDataFrame sorted by the specified column(s).</span>
-
+<span class="sd">            Callable:</span>
+<span class="sd">                The wrapped method that ensures</span>
+<span class="sd">                the result is a CytoDataFrame.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wrap_method</span><span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">sort_values</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+        <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>  <span class="c1"># noqa: ANN401</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Wraps the specified method to ensure</span>
+<span class="sd">            it returns a CytoDataFrame.</span>
+
+<span class="sd">            This function dynamically wraps a given</span>
+<span class="sd">            method of the CytoDataFrame class</span>
+<span class="sd">            to ensure that the returned result</span>
+<span class="sd">            is a CytoDataFrame instance, preserving</span>
+<span class="sd">            custom attributes.</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                *args (Tuple[Any, ...]):</span>
+<span class="sd">                    Positional arguments to be passed to the method.</span>
+<span class="sd">                **kwargs (Dict[str, Any]):</span>
+<span class="sd">                    Keyword arguments to be passed to the method.</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                Any:</span>
+<span class="sd">                    The result of the method call.</span>
+<span class="sd">                    If the result is a pandas DataFrame,</span>
+<span class="sd">                    it is wrapped in a CytoDataFrame</span>
+<span class="sd">                    instance with additional context</span>
+<span class="sd">                    information (data context directory</span>
+<span class="sd">                    and data bounding box).</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="n">method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="nb">super</span><span class="p">(</span><span class="n">CytoDataFrame</span><span class="p">,</span> <span class="bp">self</span><span class="p">),</span> <span class="n">method_name</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_return_cytodataframe</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">wrapper</span></div>
+
+
+<div class="viewcode-block" id="CytoDataFrame._wrap_methods">
+<a class="viewcode-back" href="../../../python-api.html#src.cytodataframe.frame.CytoDataFrame._wrap_methods">[docs]</a>
+    <span class="k">def</span> <span class="nf">_wrap_methods</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Method to wrap extended Pandas DataFrame methods</span>
+<span class="sd">        so they return a CytoDataFrame instead of a</span>
+<span class="sd">        Pandas DataFrame.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># list of methods by name from Pandas DataFrame class</span>
+        <span class="n">methods_to_wrap</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;head&quot;</span><span class="p">,</span> <span class="s2">&quot;tail&quot;</span><span class="p">,</span> <span class="s2">&quot;sort_values&quot;</span><span class="p">]</span>
+
+        <span class="c1"># set the wrapped method for the class instance</span>
+        <span class="k">for</span> <span class="n">method_name</span> <span class="ow">in</span> <span class="n">methods_to_wrap</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wrap_method</span><span class="p">(</span><span class="n">method_name</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="CytoDataFrame.get_bounding_box_from_data">
@@ -740,7 +788,15 @@
 
         <span class="c1"># Assign the selected columns to self.bounding_box_df</span>
         <span class="k">if</span> <span class="n">selected_group</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">&quot;Bounding box columns found: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">column_groups</span><span class="p">[</span><span class="n">selected_group</span><span class="p">],</span>
+            <span class="p">)</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">items</span><span class="o">=</span><span class="n">column_groups</span><span class="p">[</span><span class="n">selected_group</span><span class="p">])</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="s2">&quot;Found no bounding box columns.&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="k">return</span> <span class="kc">None</span></div>
 
@@ -829,7 +885,7 @@
 
         <span class="c1"># search for columns containing image file names</span>
         <span class="c1"># based on pattern above.</span>
-        <span class="k">return</span> <span class="p">[</span>
+        <span class="n">image_cols</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">column</span>
             <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span>
             <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="n">column</span><span class="p">]</span>
@@ -838,7 +894,11 @@
                 <span class="ow">and</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
             <span class="p">)</span>
             <span class="o">.</span><span class="n">any</span><span class="p">()</span>
-        <span class="p">]</span></div>
+        <span class="p">]</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Found image columns: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">image_cols</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">image_cols</span></div>
 
 
 <div class="viewcode-block" id="CytoDataFrame.get_image_paths_from_data">
@@ -869,6 +929,8 @@
             <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">image_cols</span>
             <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;FileName&quot;</span><span class="p">,</span> <span class="s2">&quot;PathName&quot;</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span>
         <span class="p">]</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Found image path columns: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">image_path_columns</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">items</span><span class="o">=</span><span class="n">image_path_columns</span><span class="p">)</span> <span class="k">if</span> <span class="n">image_path_columns</span> <span class="k">else</span> <span class="kc">None</span></div>
 
@@ -943,7 +1005,12 @@
 <span class="sd">                The target image with the applied mask or outline,</span>
 <span class="sd">                or None if no relevant file is found.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="s2">&quot;Searching for </span><span class="si">%s</span><span class="s2"> in </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;mask&quot;</span> <span class="k">if</span> <span class="n">mask</span> <span class="k">else</span> <span class="s2">&quot;outline&quot;</span><span class="p">,</span> <span class="n">data_value</span>
+        <span class="p">)</span>
+
         <span class="k">if</span> <span class="n">file_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;No mask or outline directory specified.&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">None</span>
 
         <span class="k">if</span> <span class="n">pattern_map</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -951,6 +1018,9 @@
                 <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">file_dir</span><span class="p">)</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">candidate_path</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s2">*&quot;</span><span class="p">)</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">matching_mask_file</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="s2">&quot;Found matching mask or outline: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">matching_mask_file</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="p">)</span>
                 <span class="k">if</span> <span class="n">mask</span><span class="p">:</span>
                     <span class="k">return</span> <span class="n">draw_outline_on_image_from_mask</span><span class="p">(</span>
                         <span class="n">orig_image</span><span class="o">=</span><span class="n">orig_image</span><span class="p">,</span> <span class="n">mask_image_path</span><span class="o">=</span><span class="n">matching_mask_file</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -969,6 +1039,11 @@
                     <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">file_pattern</span><span class="p">,</span> <span class="n">file</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
                 <span class="p">]</span>
                 <span class="k">if</span> <span class="n">matching_files</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="s2">&quot;Found matching mask or outline using regex pattern </span><span class="si">%s</span><span class="s2"> : </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="n">file_pattern</span><span class="p">,</span>
+                        <span class="n">matching_files</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                    <span class="p">)</span>
                     <span class="k">if</span> <span class="n">mask</span><span class="p">:</span>
                         <span class="k">return</span> <span class="n">draw_outline_on_image_from_mask</span><span class="p">(</span>
                             <span class="n">orig_image</span><span class="o">=</span><span class="n">orig_image</span><span class="p">,</span> <span class="n">mask_image_path</span><span class="o">=</span><span class="n">matching_files</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -977,6 +1052,8 @@
                         <span class="k">return</span> <span class="n">draw_outline_on_image_from_outline</span><span class="p">(</span>
                             <span class="n">orig_image</span><span class="o">=</span><span class="n">orig_image</span><span class="p">,</span> <span class="n">outline_image_path</span><span class="o">=</span><span class="n">matching_files</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                         <span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;No mask or outline found for: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">data_value</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="kc">None</span></div>
 
@@ -1007,6 +1084,16 @@
 <span class="sd">                value if the image cannot be processed.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="s2">&quot;Processing image data as HTML for display.&quot;</span>
+                <span class="s2">&quot;Data value: </span><span class="si">%s</span><span class="s2"> , Bounding box: </span><span class="si">%s</span><span class="s2"> , Image path: </span><span class="si">%s</span><span class="s2">&quot;</span>
+            <span class="p">),</span>
+            <span class="n">data_value</span><span class="p">,</span>
+            <span class="n">bounding_box</span><span class="p">,</span>
+            <span class="n">image_path</span><span class="p">,</span>
+        <span class="p">)</span>
+
         <span class="n">candidate_path</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="c1"># Get the pattern map for segmentation file regex</span>
         <span class="n">pattern_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;segmentation_file_regex&quot;</span><span class="p">)</span>
@@ -1023,6 +1110,9 @@
                     <span class="p">)</span>
                 <span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span>
             <span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="s2">&quot;Found existing image from path: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">existing_image_from_path</span>
+                <span class="p">)</span>
                 <span class="n">candidate_path</span> <span class="o">=</span> <span class="n">existing_image_from_path</span>
 
             <span class="c1"># Search for the data value in the data context directory</span>
@@ -1033,10 +1123,15 @@
                     <span class="p">)</span>
                 <span class="p">)</span>
             <span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="s2">&quot;Found candidate paths (and attempting to use the first): </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">candidate_paths</span><span class="p">,</span>
+                <span class="p">)</span>
                 <span class="c1"># If a candidate file is found, use the first one</span>
                 <span class="n">candidate_path</span> <span class="o">=</span> <span class="n">candidate_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
             <span class="k">else</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;No candidate file found for: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">data_value</span><span class="p">)</span>
                 <span class="c1"># If no candidate file is found, return the original data value</span>
                 <span class="k">return</span> <span class="n">data_value</span>
 
@@ -1046,8 +1141,10 @@
         <span class="c1"># Adjust the image with image adjustment callable</span>
         <span class="c1"># or adaptive histogram equalization</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;image_adjustment&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Adjusting image with custom image adjustment function.&quot;</span><span class="p">)</span>
             <span class="n">orig_image_array</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;image_adjustment&quot;</span><span class="p">](</span><span class="n">orig_image_array</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Adjusting image with adaptive histogram equalization.&quot;</span><span class="p">)</span>
             <span class="n">orig_image_array</span> <span class="o">=</span> <span class="n">adjust_with_adaptive_histogram_equalization</span><span class="p">(</span>
                 <span class="n">orig_image_array</span>
             <span class="p">)</span>
@@ -1098,6 +1195,8 @@
                 <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prepared_image</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
 
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Cropped image array shape: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">cropped_img_array</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
         <span class="c1"># Step 6:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="c1"># Save cropped image to buffer</span>
@@ -1109,8 +1208,10 @@
 
         <span class="k">except</span> <span class="p">(</span><span class="ne">FileNotFoundError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="c1"># Handle errors if image processing fails</span>
-            <span class="nb">print</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">data_value</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Image processed successfully and being sent to HTML for display.&quot;</span><span class="p">)</span>
 
         <span class="c1"># Return HTML image display as a base64-encoded PNG</span>
         <span class="k">return</span> <span class="p">(</span>
@@ -1122,6 +1223,16 @@
 <div class="viewcode-block" id="CytoDataFrame.get_displayed_rows">
 <a class="viewcode-back" href="../../../python-api.html#src.cytodataframe.frame.CytoDataFrame.get_displayed_rows">[docs]</a>
     <span class="k">def</span> <span class="nf">get_displayed_rows</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">CytoDataFrame_type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the indices of the rows that are currently</span>
+<span class="sd">        displayed based on the pandas display settings.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List[int]:</span>
+<span class="sd">                A list of indices of the rows that</span>
+<span class="sd">                are currently displayed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="c1"># Get the current display settings</span>
         <span class="n">max_rows</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">get_option</span><span class="p">(</span><span class="s2">&quot;display.max_rows&quot;</span><span class="p">)</span>
         <span class="n">min_rows</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">get_option</span><span class="p">(</span><span class="s2">&quot;display.min_rows&quot;</span><span class="p">)</span>
@@ -1134,6 +1245,7 @@
             <span class="n">half_min_rows</span> <span class="o">=</span> <span class="n">min_rows</span> <span class="o">//</span> <span class="mi">2</span>
             <span class="n">start_display</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">[:</span><span class="n">half_min_rows</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
             <span class="n">end_display</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="n">half_min_rows</span><span class="p">:]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Detected display rows: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">start_display</span> <span class="o">+</span> <span class="n">end_display</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">start_display</span> <span class="o">+</span> <span class="n">end_display</span></div>
 
 
@@ -1158,6 +1270,7 @@
 <span class="sd">            str: The data in a pandas DataFrame.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
+        <span class="c1"># handles DataFrame.info representations</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_info_repr</span><span class="p">():</span>
             <span class="n">buf</span> <span class="o">=</span> <span class="n">StringIO</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">buf</span><span class="o">=</span><span class="n">buf</span><span class="p">)</span>
@@ -1180,6 +1293,7 @@
                 <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
                 <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_bounding_box&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
             <span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Re-adding bounding box columns.&quot;</span><span class="p">)</span>
                 <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">other</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_bounding_box&quot;</span><span class="p">])</span>
                 <span class="n">bounding_box_externally_joined</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="k">else</span><span class="p">:</span>
@@ -1194,6 +1308,7 @@
                 <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
                 <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_image_paths&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
             <span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Re-adding image path columns.&quot;</span><span class="p">)</span>
                 <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">other</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_image_paths&quot;</span><span class="p">])</span>
                 <span class="n">image_paths_externally_joined</span> <span class="o">=</span> <span class="kc">True</span>
 
@@ -1203,6 +1318,7 @@
                 <span class="n">image_path_cols</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_image_path_columns</span><span class="p">(</span>
                     <span class="n">image_cols</span><span class="o">=</span><span class="n">image_cols</span><span class="p">,</span> <span class="n">all_cols</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span>
                 <span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Image columns found: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">image_cols</span><span class="p">)</span>
 
             <span class="c1"># gather indices which will be displayed based on pandas configuration</span>
             <span class="n">display_indices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_displayed_rows</span><span class="p">()</span>
