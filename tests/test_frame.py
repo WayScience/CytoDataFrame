@@ -221,3 +221,4 @@ def test_return_cytodataframe(cytotable_NF1_data_parquet_shrunken: str):
     assert isinstance(cdf.head(), CytoDataFrame)
     assert isinstance(cdf.tail(), CytoDataFrame)
     assert isinstance(cdf.sort_values(by="Metadata_ImageNumber"), CytoDataFrame)
+    assert isinstance(cdf.sample(n=5), CytoDataFrame)
