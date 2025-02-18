@@ -320,7 +320,7 @@ class CytoDataFrame(pd.DataFrame):
         """
 
         # list of methods by name from Pandas DataFrame class
-        methods_to_wrap = ["head", "tail", "sort_values"]
+        methods_to_wrap = ["head", "tail", "sort_values", "sample"]
 
         # set the wrapped method for the class instance
         for method_name in methods_to_wrap:
