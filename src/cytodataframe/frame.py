@@ -77,6 +77,7 @@ class CytoDataFrame(pd.DataFrame):
         data_outline_context_dir: Optional[str] = None,
         segmentation_file_regex: Optional[Dict[str, str]] = None,
         image_adjustment: Optional[Callable] = None,
+        display_options: Optional[Dict[str, Any]] = None,
         *args: Tuple[Any, ...],
         **kwargs: Dict[str, Any],
     ) -> None:
@@ -114,6 +115,15 @@ class CytoDataFrame(pd.DataFrame):
                 which will incur an adaptive histogram equalization on images.
                 Reference histogram equalization for more information:
                 https://scikit-image.org/docs/stable/auto_examples/color_exposure/
+            display_options: Optional[Dict[str, Any]]:
+                A dictionary of display options for the DataFrame images.
+                This can include options like 'width', 'height', etc.
+                which are used to specify the display size of images in HTML.
+                Options:
+                - 'width': Width of the displayed image in pixels. A value of
+                None will default to use automatic / default adjustments.
+                - 'height': Height of the displayed image in pixels. A value of
+                None will default to use automatic / default adjustments.
             **kwargs:
                 Additional keyword arguments to pass to the pandas read functions.
         """
@@ -139,6 +149,9 @@ class CytoDataFrame(pd.DataFrame):
             ),
             "image_adjustment": (
                 image_adjustment if image_adjustment is not None else None
+            ),
+            "display_options": (
+                display_options if display_options is not None else None
             ),
         }
 
@@ -238,6 +251,7 @@ class CytoDataFrame(pd.DataFrame):
                 data_outline_context_dir=self._custom_attrs["data_outline_context_dir"],
                 segmentation_file_regex=self._custom_attrs["segmentation_file_regex"],
                 image_adjustment=self._custom_attrs["image_adjustment"],
+                display_options=self._custom_attrs["display_options"],
             )
 
     def _return_cytodataframe(
@@ -277,6 +291,7 @@ class CytoDataFrame(pd.DataFrame):
                 data_outline_context_dir=self._custom_attrs["data_outline_context_dir"],
                 segmentation_file_regex=self._custom_attrs["segmentation_file_regex"],
                 image_adjustment=self._custom_attrs["image_adjustment"],
+                display_options=self._custom_attrs["display_options"],
             )
         return result
 
@@ -903,9 +918,25 @@ class CytoDataFrame(pd.DataFrame):
         logger.debug("Image processed successfully and being sent to HTML for display.")
 
         # Step 8: Return HTML image display as a base64-encoded PNG
+        # we dynamically style the image so that it will be displayed based
+        # on automatic or user-based settings from the display_options custom
+        # attribute.
+        display_options = self._custom_attrs.get("display_options", {})
+        if display_options is None:
+            display_options = {}
+        width = display_options.get("width", 300)
+        height = display_options.get("height", None)
+
+        html_style = [f"width:{width}px"]
+        if height is not None:
+            html_style.append(f"height:{height}px")
+
+        html_style_joined = ";".join(html_style)
+        base64_image_bytes = base64.b64encode(png_bytes).decode("utf-8")
+
         return (
             '<img src="data:image/png;base64,'
-            f'{base64.b64encode(png_bytes).decode("utf-8")}" style="width:300px;"/>'
+            f'{base64_image_bytes}" style="{html_style_joined}"/>'
         )
 
     def get_displayed_rows(self: CytoDataFrame_type) -> List[int]:
