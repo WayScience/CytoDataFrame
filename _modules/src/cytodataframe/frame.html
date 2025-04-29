@@ -472,6 +472,7 @@
         <span class="n">data_context_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">data_image_paths</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">data_bounding_box</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">compartment_center_xy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">data_mask_context_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">data_outline_context_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">segmentation_file_regex</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -491,6 +492,13 @@
 <span class="sd">                Image path data for the image files.</span>
 <span class="sd">            data_bounding_box (Optional[pd.DataFrame]):</span>
 <span class="sd">                Bounding box data for the DataFrame images.</span>
+<span class="sd">            compartment_center_xy: Optional[Union[pd.DataFrame, bool]]:</span>
+<span class="sd">                Center coordinates for the compartments in the DataFrame.</span>
+<span class="sd">                If the value is None the default behavior is to find columns</span>
+<span class="sd">                related to the compartment center xy data and indicate red dots</span>
+<span class="sd">                where those points are within the cropped image display through</span>
+<span class="sd">                Jupyter notebooks. If the value is False then no compartment</span>
+<span class="sd">                center xy data will be used for the DataFrame.</span>
 <span class="sd">            data_mask_context_dir: Optional[str]:</span>
 <span class="sd">                Directory context for the mask data for images.</span>
 <span class="sd">            data_outline_context_dir: Optional[str]:</span>
@@ -517,6 +525,7 @@
             <span class="p">),</span>
             <span class="s2">&quot;data_image_paths&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
             <span class="s2">&quot;data_bounding_box&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;compartment_center_xy&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
             <span class="s2">&quot;data_mask_context_dir&quot;</span><span class="p">:</span> <span class="p">(</span>
                 <span class="n">data_mask_context_dir</span> <span class="k">if</span> <span class="n">data_mask_context_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
             <span class="p">),</span>
@@ -582,6 +591,14 @@
             <span class="k">else</span> <span class="n">data_bounding_box</span>
         <span class="p">)</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;compartment_center_xy&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_compartment_center_xy_from_data</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">compartment_center_xy</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">compartment_center_xy</span> <span class="ow">is</span> <span class="kc">True</span>
+            <span class="k">else</span> <span class="n">compartment_center_xy</span>
+            <span class="k">if</span> <span class="n">compartment_center_xy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_image_paths&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">get_image_paths_from_data</span><span class="p">(</span><span class="n">image_cols</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">find_image_columns</span><span class="p">())</span>
             <span class="k">if</span> <span class="n">data_image_paths</span> <span class="ow">is</span> <span class="kc">None</span>
@@ -616,6 +633,7 @@
                 <span class="n">data_context_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_context_dir&quot;</span><span class="p">],</span>
                 <span class="n">data_image_paths</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_image_paths&quot;</span><span class="p">],</span>
                 <span class="n">data_bounding_box</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_bounding_box&quot;</span><span class="p">],</span>
+                <span class="n">compartment_center_xy</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;compartment_center_xy&quot;</span><span class="p">],</span>
                 <span class="n">data_mask_context_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_mask_context_dir&quot;</span><span class="p">],</span>
                 <span class="n">data_outline_context_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_outline_context_dir&quot;</span><span class="p">],</span>
                 <span class="n">segmentation_file_regex</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;segmentation_file_regex&quot;</span><span class="p">],</span>
@@ -656,6 +674,7 @@
                 <span class="n">data_context_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_context_dir&quot;</span><span class="p">],</span>
                 <span class="n">data_image_paths</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_image_paths&quot;</span><span class="p">],</span>
                 <span class="n">data_bounding_box</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_bounding_box&quot;</span><span class="p">],</span>
+                <span class="n">compartment_center_xy</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;compartment_center_xy&quot;</span><span class="p">],</span>
                 <span class="n">data_mask_context_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_mask_context_dir&quot;</span><span class="p">],</span>
                 <span class="n">data_outline_context_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_outline_context_dir&quot;</span><span class="p">],</span>
                 <span class="n">segmentation_file_regex</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;segmentation_file_regex&quot;</span><span class="p">],</span>
@@ -796,6 +815,78 @@
 
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
             <span class="s2">&quot;Found no bounding box columns.&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="CytoDataFrame.get_compartment_center_xy_from_data">
+<a class="viewcode-back" href="../../../python-api.html#src.cytodataframe.frame.CytoDataFrame.get_compartment_center_xy_from_data">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_compartment_center_xy_from_data</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">:</span> <span class="n">CytoDataFrame_type</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CytoDataFrame_type</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieves compartment center xy data from the</span>
+<span class="sd">        DataFrame based on predefined column groups.</span>
+
+<span class="sd">        This method identifies specific groups of columns representing center xy</span>
+<span class="sd">        coordinates for different cellular components (cytoplasm, nuclei, cells) and</span>
+<span class="sd">        checks for their presence in the DataFrame. If all required columns are present,</span>
+<span class="sd">        it filters and returns a new CytoDataFrame instance containing only these</span>
+<span class="sd">        columns.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Optional[CytoDataFrame_type]:</span>
+<span class="sd">                A new instance of CytoDataFrame containing the bounding box columns if</span>
+<span class="sd">                they exist in the DataFrame. Returns None if the required columns</span>
+<span class="sd">                are not found.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Define column groups and their corresponding conditions</span>
+        <span class="n">column_groups</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;nuclei&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s2">&quot;Nuclei_Location_Center_X&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Nuclei_Location_Center_Y&quot;</span><span class="p">,</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;nuclei_w_meta&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s2">&quot;Metadata_Nuclei_Location_Center_X&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Metadata_Nuclei_Location_Center_Y&quot;</span><span class="p">,</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;cells&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s2">&quot;Cells_Location_Center_X&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Cells_Location_Center_Y&quot;</span><span class="p">,</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;cells_w_meta&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s2">&quot;Metadata_Cells_Location_Center_X&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Metadata_Cells_Location_Center_Y&quot;</span><span class="p">,</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;cyto&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s2">&quot;Cytoplasm_Location_Center_X&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Cytoplasm_Location_Center_Y&quot;</span><span class="p">,</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;cyto_w_meta&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s2">&quot;Metadata_Cytoplasm_Location_Center_X&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Metadata_Cytoplasm_Location_Center_Y&quot;</span><span class="p">,</span>
+            <span class="p">],</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Determine which group of columns to select based on availability in self.data</span>
+        <span class="n">selected_group</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">group</span><span class="p">,</span> <span class="n">cols</span> <span class="ow">in</span> <span class="n">column_groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">):</span>
+                <span class="n">selected_group</span> <span class="o">=</span> <span class="n">group</span>
+                <span class="k">break</span>
+
+        <span class="c1"># Assign the selected columns to self.compartment_center_xy</span>
+        <span class="k">if</span> <span class="n">selected_group</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">&quot;Compartment center xy columns found: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">column_groups</span><span class="p">[</span><span class="n">selected_group</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">items</span><span class="o">=</span><span class="n">column_groups</span><span class="p">[</span><span class="n">selected_group</span><span class="p">])</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="s2">&quot;Found no compartment center xy columns.&quot;</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="kc">None</span></div>
@@ -1060,10 +1151,11 @@
 
 <div class="viewcode-block" id="CytoDataFrame.process_image_data_as_html_display">
 <a class="viewcode-back" href="../../../python-api.html#src.cytodataframe.frame.CytoDataFrame.process_image_data_as_html_display">[docs]</a>
-    <span class="k">def</span> <span class="nf">process_image_data_as_html_display</span><span class="p">(</span>
+    <span class="k">def</span> <span class="nf">process_image_data_as_html_display</span><span class="p">(</span>  <span class="c1"># noqa: PLR0912, C901, PLR0915</span>
         <span class="bp">self</span><span class="p">:</span> <span class="n">CytoDataFrame_type</span><span class="p">,</span>
         <span class="n">data_value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>  <span class="c1"># noqa: ANN401</span>
         <span class="n">bounding_box</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+        <span class="n">compartment_center_xy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">image_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -1077,6 +1169,10 @@
 <span class="sd">                The value to search for in the file system or as the image data.</span>
 <span class="sd">            bounding_box (Tuple[int, int, int, int]):</span>
 <span class="sd">                The bounding box to crop the image.</span>
+<span class="sd">            compartment_center_xy (Optional[Tuple[int, int]]):</span>
+<span class="sd">                The center coordinates of the compartment.</span>
+<span class="sd">            image_path (Optional[str]):</span>
+<span class="sd">                The path to the image file.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            str:</span>
@@ -1087,10 +1183,12 @@
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
             <span class="p">(</span>
                 <span class="s2">&quot;Processing image data as HTML for display.&quot;</span>
-                <span class="s2">&quot;Data value: </span><span class="si">%s</span><span class="s2"> , Bounding box: </span><span class="si">%s</span><span class="s2"> , Image path: </span><span class="si">%s</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;Data value: </span><span class="si">%s</span><span class="s2"> , Bounding box: </span><span class="si">%s</span><span class="s2"> , &quot;</span>
+                <span class="s2">&quot;Compartment center xy: </span><span class="si">%s</span><span class="s2">, Image path: </span><span class="si">%s</span><span class="s2">&quot;</span>
             <span class="p">),</span>
             <span class="n">data_value</span><span class="p">,</span>
             <span class="n">bounding_box</span><span class="p">,</span>
+            <span class="n">compartment_center_xy</span><span class="p">,</span>
             <span class="n">image_path</span><span class="p">,</span>
         <span class="p">)</span>
 
@@ -1179,7 +1277,33 @@
         <span class="k">if</span> <span class="n">prepared_image</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">prepared_image</span> <span class="o">=</span> <span class="n">orig_image_array</span>
 
-        <span class="c1"># Step 5: Crop the image based on the bounding box and encode it to PNG format</span>
+        <span class="c1"># Step 5: Add a red dot for the compartment center before cropping</span>
+        <span class="k">if</span> <span class="n">compartment_center_xy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">center_x</span><span class="p">,</span> <span class="n">center_y</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">compartment_center_xy</span><span class="p">)</span>  <span class="c1"># Ensure integers</span>
+
+            <span class="c1"># Convert grayscale image to RGB if necessary</span>
+            <span class="c1"># Check if the image is grayscale</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">prepared_image</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># noqa: PLR2004</span>
+                <span class="n">prepared_image</span> <span class="o">=</span> <span class="n">skimage</span><span class="o">.</span><span class="n">color</span><span class="o">.</span><span class="n">gray2rgb</span><span class="p">(</span><span class="n">prepared_image</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">center_y</span> <span class="o">&lt;</span> <span class="n">prepared_image</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="ow">and</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">center_x</span> <span class="o">&lt;</span> <span class="n">prepared_image</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="p">):</span>
+                <span class="c1"># Calculate the radius as a fraction of the bounding box size</span>
+                <span class="n">x_min</span><span class="p">,</span> <span class="n">y_min</span><span class="p">,</span> <span class="n">x_max</span><span class="p">,</span> <span class="n">y_max</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">bounding_box</span><span class="p">)</span>
+                <span class="n">box_width</span> <span class="o">=</span> <span class="n">x_max</span> <span class="o">-</span> <span class="n">x_min</span>
+                <span class="n">box_height</span> <span class="o">=</span> <span class="n">y_max</span> <span class="o">-</span> <span class="n">y_min</span>
+                <span class="n">radius</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                    <span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">box_width</span><span class="p">,</span> <span class="n">box_height</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.03</span><span class="p">)</span>
+                <span class="p">)</span>  <span class="c1"># 3% of the smaller dimension</span>
+
+                <span class="n">rr</span><span class="p">,</span> <span class="n">cc</span> <span class="o">=</span> <span class="n">skimage</span><span class="o">.</span><span class="n">draw</span><span class="o">.</span><span class="n">disk</span><span class="p">(</span>
+                    <span class="p">(</span><span class="n">center_y</span><span class="p">,</span> <span class="n">center_x</span><span class="p">),</span> <span class="n">radius</span><span class="o">=</span><span class="n">radius</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">prepared_image</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="n">prepared_image</span><span class="p">[</span><span class="n">rr</span><span class="p">,</span> <span class="n">cc</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>  <span class="c1"># Red color in RGB</span>
+
+        <span class="c1"># Step 6: Crop the image based on the bounding box and encode it to PNG format</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">x_min</span><span class="p">,</span> <span class="n">y_min</span><span class="p">,</span> <span class="n">x_max</span><span class="p">,</span> <span class="n">y_max</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">bounding_box</span><span class="p">)</span>  <span class="c1"># Ensure integers</span>
             <span class="n">cropped_img_array</span> <span class="o">=</span> <span class="n">prepared_image</span><span class="p">[</span>
@@ -1197,7 +1321,7 @@
 
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Cropped image array shape: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">cropped_img_array</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 
-        <span class="c1"># Step 6:</span>
+        <span class="c1"># Step 7:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="c1"># Save cropped image to buffer</span>
             <span class="n">png_bytes_io</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">()</span>
@@ -1213,7 +1337,7 @@
 
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Image processed successfully and being sent to HTML for display.&quot;</span><span class="p">)</span>
 
-        <span class="c1"># Return HTML image display as a base64-encoded PNG</span>
+        <span class="c1"># Step 8: Return HTML image display as a base64-encoded PNG</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="s1">&#39;&lt;img src=&quot;data:image/png;base64,&#39;</span>
             <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">png_bytes</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span><span class="si">}</span><span class="s1">&quot; style=&quot;width:300px;&quot;/&gt;&#39;</span>
@@ -1251,7 +1375,7 @@
 
 <div class="viewcode-block" id="CytoDataFrame._repr_html_">
 <a class="viewcode-back" href="../../../python-api.html#src.cytodataframe.frame.CytoDataFrame._repr_html_">[docs]</a>
-    <span class="k">def</span> <span class="nf">_repr_html_</span><span class="p">(</span>
+    <span class="k">def</span> <span class="nf">_repr_html_</span><span class="p">(</span>  <span class="c1"># noqa: C901, PLR0912</span>
         <span class="bp">self</span><span class="p">:</span> <span class="n">CytoDataFrame_type</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -1285,10 +1409,8 @@
             <span class="n">max_cols</span> <span class="o">=</span> <span class="n">get_option</span><span class="p">(</span><span class="s2">&quot;display.max_columns&quot;</span><span class="p">)</span>
             <span class="n">show_dimensions</span> <span class="o">=</span> <span class="n">get_option</span><span class="p">(</span><span class="s2">&quot;display.show_dimensions&quot;</span><span class="p">)</span>
 
-            <span class="c1"># re-add bounding box cols if they are no longer available as in cases</span>
-            <span class="c1"># of masking or accessing various pandas attr&#39;s</span>
+            <span class="c1"># Re-add bounding box columns if they are no longer available</span>
             <span class="n">bounding_box_externally_joined</span> <span class="o">=</span> <span class="kc">False</span>
-
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_bounding_box&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span>
                 <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
                 <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_bounding_box&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
@@ -1297,20 +1419,58 @@
                 <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">other</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_bounding_box&quot;</span><span class="p">])</span>
                 <span class="n">bounding_box_externally_joined</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">bounding_box_externally_joined</span> <span class="k">else</span> <span class="n">data</span>
 
-            <span class="c1"># re-add image path (dirs for images) cols if they are no</span>
-            <span class="c1"># longer available as in cases of masking or accessing</span>
-            <span class="c1"># various pandas attr&#39;s</span>
+            <span class="c1"># Re-add compartment center xy columns if they are no longer available</span>
+            <span class="n">compartment_center_externally_joined</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;compartment_center_xy&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span>
+                <span class="n">col</span>
+                <span class="ow">in</span> <span class="p">(</span><span class="n">data</span> <span class="k">if</span> <span class="n">bounding_box_externally_joined</span> <span class="k">else</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;compartment_center_xy&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Re-adding compartment center xy columns.&quot;</span><span class="p">)</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">data</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">other</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;compartment_center_xy&quot;</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">bounding_box_externally_joined</span>
+                    <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">other</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;compartment_center_xy&quot;</span><span class="p">])</span>
+                <span class="p">)</span>
+                <span class="n">compartment_center_externally_joined</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">data</span>
+                    <span class="k">if</span> <span class="n">bounding_box_externally_joined</span>
+                    <span class="ow">or</span> <span class="n">compartment_center_externally_joined</span>
+                    <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="p">)</span>
+
+            <span class="c1"># Re-add image path columns if they are no longer available</span>
             <span class="n">image_paths_externally_joined</span> <span class="o">=</span> <span class="kc">False</span>
-
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_image_paths&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span>
-                <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                <span class="n">col</span>
+                <span class="ow">in</span> <span class="p">(</span>
+                    <span class="n">data</span> <span class="k">if</span> <span class="n">compartment_center_externally_joined</span> <span class="k">else</span> <span class="bp">self</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
                 <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_image_paths&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
             <span class="p">):</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Re-adding image path columns.&quot;</span><span class="p">)</span>
-                <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">other</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_image_paths&quot;</span><span class="p">])</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="s2">&quot;bounding_box: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">compartment_center_externally_joined</span>
+                    <span class="ow">or</span> <span class="n">bounding_box_externally_joined</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">data</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">other</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_image_paths&quot;</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">compartment_center_externally_joined</span>
+                    <span class="ow">or</span> <span class="n">bounding_box_externally_joined</span>
+                    <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">other</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_image_paths&quot;</span><span class="p">])</span>
+                <span class="p">)</span>
                 <span class="n">image_paths_externally_joined</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">data</span>
+                    <span class="k">if</span> <span class="n">image_paths_externally_joined</span> <span class="ow">or</span> <span class="n">bounding_box_externally_joined</span>
+                    <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="p">)</span>
 
                 <span class="c1"># determine if we have image_cols to display</span>
             <span class="k">if</span> <span class="n">image_cols</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_image_columns</span><span class="p">():</span>
@@ -1325,6 +1485,12 @@
 
             <span class="c1"># gather bounding box columns for use below</span>
             <span class="n">bounding_box_cols</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_bounding_box&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+            <span class="c1"># gather compartment_xy columns for use below</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;compartment_center_xy&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">compartment_center_xy_cols</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span>
+                    <span class="s2">&quot;compartment_center_xy&quot;</span>
+                <span class="p">]</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 
             <span class="k">for</span> <span class="n">image_col</span> <span class="ow">in</span> <span class="n">image_cols</span><span class="p">:</span>
                 <span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">display_indices</span><span class="p">,</span> <span class="n">image_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">display_indices</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
@@ -1364,6 +1530,30 @@
                                 <span class="p">)</span>
                             <span class="p">],</span>
                         <span class="p">),</span>
+                        <span class="n">compartment_center_xy</span><span class="o">=</span><span class="p">(</span>
+                            <span class="p">(</span>
+                                <span class="c1"># rows below are specified using the column name to</span>
+                                <span class="c1"># determine which part of the bounding box the columns</span>
+                                <span class="c1"># relate to (the list of column names could be in</span>
+                                <span class="c1"># various order).</span>
+                                <span class="n">row</span><span class="p">[</span>
+                                    <span class="nb">next</span><span class="p">(</span>
+                                        <span class="n">col</span>
+                                        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">compartment_center_xy_cols</span>
+                                        <span class="k">if</span> <span class="s2">&quot;X&quot;</span> <span class="ow">in</span> <span class="n">col</span>
+                                    <span class="p">)</span>
+                                <span class="p">],</span>
+                                <span class="n">row</span><span class="p">[</span>
+                                    <span class="nb">next</span><span class="p">(</span>
+                                        <span class="n">col</span>
+                                        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">compartment_center_xy_cols</span>
+                                        <span class="k">if</span> <span class="s2">&quot;Y&quot;</span> <span class="ow">in</span> <span class="n">col</span>
+                                    <span class="p">)</span>
+                                <span class="p">],</span>
+                            <span class="p">)</span>
+                            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;compartment_center_xy&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                            <span class="k">else</span> <span class="kc">None</span>
+                        <span class="p">),</span>
                         <span class="c1"># set the image path based on the image_path cols.</span>
                         <span class="n">image_path</span><span class="o">=</span><span class="p">(</span>
                             <span class="n">row</span><span class="p">[</span><span class="n">image_path_cols</span><span class="p">[</span><span class="n">image_col</span><span class="p">]]</span>
@@ -1377,6 +1567,11 @@
             <span class="k">if</span> <span class="n">bounding_box_externally_joined</span><span class="p">:</span>
                 <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_bounding_box&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+                <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">compartment_center_externally_joined</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;compartment_center_xy&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
                 <span class="p">)</span>
 
             <span class="k">if</span> <span class="n">image_paths_externally_joined</span><span class="p">:</span>
