@@ -9,7 +9,7 @@ from pyarrow import parquet
 
 from cytodataframe.frame import CytoDataFrame
 from tests.utils import (
-    cytodataframe_image_display_contains_green_pixels,
+    cytodataframe_image_display_contains_pixels,
 )
 
 
@@ -105,7 +105,7 @@ def test_cytodataframe_input(
     pd.testing.assert_frame_equal(copy_sc_df, sc_df)
 
 
-def test_repr_html(
+def test_repr_html_green_pixels(
     cytotable_NF1_data_parquet_shrunken: str,
     cytotable_nuclear_speckles_data_parquet: str,
     cytotable_pediatric_cancer_atlas_parquet: str,
@@ -116,13 +116,14 @@ def test_repr_html(
 
     # Ensure there's at least one greenish pixel in the image
     # when context dirs are set for the NF1 dataset.
-    assert cytodataframe_image_display_contains_green_pixels(
+    assert cytodataframe_image_display_contains_pixels(
         frame=CytoDataFrame(
             data=cytotable_NF1_data_parquet_shrunken,
             data_context_dir=f"{pathlib.Path(cytotable_NF1_data_parquet_shrunken).parent}/Plate_2_images",
             data_mask_context_dir=f"{pathlib.Path(cytotable_NF1_data_parquet_shrunken).parent}/Plate_2_masks",
         ),
         image_cols=["Image_FileName_DAPI", "Image_FileName_GFP", "Image_FileName_RFP"],
+        color_conditions={"green": 50, "red": None, "blue": None},
     ), "The NF1 images do not contain green outlines."
 
     # Ensure there's at least one greenish pixel in the image
@@ -134,17 +135,18 @@ def test_repr_html(
         :, ["Image_PathName_DAPI", "Image_PathName_GFP", "Image_PathName_RFP"]
     ] = f"{pathlib.Path(cytotable_NF1_data_parquet_shrunken).parent}/Plate_2_images"
 
-    assert cytodataframe_image_display_contains_green_pixels(
+    assert cytodataframe_image_display_contains_pixels(
         frame=CytoDataFrame(
             data=nf1_dataset_with_modified_image_paths,
             data_mask_context_dir=f"{pathlib.Path(cytotable_NF1_data_parquet_shrunken).parent}/Plate_2_masks",
         ),
         image_cols=["Image_FileName_DAPI", "Image_FileName_GFP", "Image_FileName_RFP"],
+        color_conditions={"green": 50, "red": None, "blue": None},
     ), "The NF1 images do not contain green outlines."
 
     # Ensure there's at least one greenish pixel in the image
     # when context dirs are set for the nuclear speckles dataset.
-    assert cytodataframe_image_display_contains_green_pixels(
+    assert cytodataframe_image_display_contains_pixels(
         frame=CytoDataFrame(
             data=cytotable_nuclear_speckles_data_parquet,
             data_context_dir=f"{pathlib.Path(cytotable_nuclear_speckles_data_parquet).parent}/images",
@@ -155,11 +157,12 @@ def test_repr_html(
             "Image_FileName_DAPI",
             "Image_FileName_GOLD",
         ],
+        color_conditions={"green": 50, "red": None, "blue": None},
     ), "The nuclear speckles images do not contain green outlines."
 
     # Ensure there's at least one greenish pixel in the image
     # when context dirs are set for the pediatric cancer dataset.
-    assert cytodataframe_image_display_contains_green_pixels(
+    assert cytodataframe_image_display_contains_pixels(
         frame=CytoDataFrame(
             data=cytotable_pediatric_cancer_atlas_parquet,
             data_context_dir=f"{pathlib.Path(cytotable_pediatric_cancer_atlas_parquet).parent}/images/orig",
@@ -173,6 +176,7 @@ def test_repr_html(
             "Image_FileName_OrigAGP",
             "Image_FileName_OrigDNA",
         ],
+        color_conditions={"green": 50, "red": None, "blue": None},
     ), "The pediatric cancer atlas speckles images do not contain green outlines."
 
     # Ensure there's at least one greenish pixel in the image
@@ -194,7 +198,7 @@ def test_repr_html(
     )
     # fmt: on
 
-    assert cytodataframe_image_display_contains_green_pixels(
+    assert cytodataframe_image_display_contains_pixels(
         frame=CytoDataFrame(
             data=pediatric_cancer_dataset_with_modified_image_paths,
             data_outline_context_dir=f"{pathlib.Path(cytotable_pediatric_cancer_atlas_parquet).parent}/images/outlines",
@@ -207,6 +211,117 @@ def test_repr_html(
             "Image_FileName_OrigAGP",
             "Image_FileName_OrigDNA",
         ],
+        color_conditions={"green": 50, "red": None, "blue": None},
+    ), "The pediatric cancer atlas speckles images do not contain green outlines."
+
+
+def test_repr_html_red_pixels(
+    cytotable_NF1_data_parquet_shrunken: str,
+    cytotable_nuclear_speckles_data_parquet: str,
+    cytotable_pediatric_cancer_atlas_parquet: str,
+):
+    """
+    Tests how images are rendered through customized repr_html in CytoDataFrame.
+    """
+
+    # Ensure there's at least one reddish pixel in the image
+    # when context dirs are set for the NF1 dataset.
+    assert cytodataframe_image_display_contains_pixels(
+        frame=CytoDataFrame(
+            data=cytotable_NF1_data_parquet_shrunken,
+            data_context_dir=f"{pathlib.Path(cytotable_NF1_data_parquet_shrunken).parent}/Plate_2_images",
+            data_mask_context_dir=f"{pathlib.Path(cytotable_NF1_data_parquet_shrunken).parent}/Plate_2_masks",
+        ),
+        image_cols=["Image_FileName_DAPI", "Image_FileName_GFP", "Image_FileName_RFP"],
+        color_conditions={"green": None, "red": 50, "blue": None},
+    ), "The NF1 images do not contain green outlines."
+
+    # Ensure there's at least one greenish pixel in the image
+    # when context dirs are NOT set for the NF1 dataset.
+    nf1_dataset_with_modified_image_paths = pd.read_parquet(
+        path=cytotable_NF1_data_parquet_shrunken
+    )
+    nf1_dataset_with_modified_image_paths.loc[
+        :, ["Image_PathName_DAPI", "Image_PathName_GFP", "Image_PathName_RFP"]
+    ] = f"{pathlib.Path(cytotable_NF1_data_parquet_shrunken).parent}/Plate_2_images"
+
+    assert cytodataframe_image_display_contains_pixels(
+        frame=CytoDataFrame(
+            data=nf1_dataset_with_modified_image_paths,
+            data_mask_context_dir=f"{pathlib.Path(cytotable_NF1_data_parquet_shrunken).parent}/Plate_2_masks",
+        ),
+        image_cols=["Image_FileName_DAPI", "Image_FileName_GFP", "Image_FileName_RFP"],
+        color_conditions={"green": None, "red": 50, "blue": None},
+    ), "The NF1 images do not contain green outlines."
+
+    # Ensure there's at least one reddish pixel in the image
+    # when context dirs are set for the nuclear speckles dataset.
+    assert cytodataframe_image_display_contains_pixels(
+        frame=CytoDataFrame(
+            data=cytotable_nuclear_speckles_data_parquet,
+            data_context_dir=f"{pathlib.Path(cytotable_nuclear_speckles_data_parquet).parent}/images",
+            data_mask_context_dir=f"{pathlib.Path(cytotable_nuclear_speckles_data_parquet).parent}/masks",
+        ),
+        image_cols=[
+            "Image_FileName_A647",
+            "Image_FileName_DAPI",
+            "Image_FileName_GOLD",
+        ],
+        color_conditions={"green": None, "red": 50, "blue": None},
+    ), "The nuclear speckles images do not contain green outlines."
+
+    # Ensure there's at least one reddish pixel in the image
+    # when context dirs are set for the pediatric cancer dataset.
+    assert cytodataframe_image_display_contains_pixels(
+        frame=CytoDataFrame(
+            data=cytotable_pediatric_cancer_atlas_parquet,
+            data_context_dir=f"{pathlib.Path(cytotable_pediatric_cancer_atlas_parquet).parent}/images/orig",
+            data_outline_context_dir=f"{pathlib.Path(cytotable_pediatric_cancer_atlas_parquet).parent}/images/outlines",
+            segmentation_file_regex={
+                r"CellsOutlines_BR(\d+)_C(\d{2})_\d+\.tiff": r".*ch3.*\.tiff",
+                r"NucleiOutlines_BR(\d+)_C(\d{2})_\d+\.tiff": r".*ch5.*\.tiff",
+            },
+        ),
+        image_cols=[
+            "Image_FileName_OrigAGP",
+            "Image_FileName_OrigDNA",
+        ],
+        color_conditions={"green": None, "red": 50, "blue": None},
+    ), "The pediatric cancer atlas speckles images do not contain green outlines."
+
+    # Ensure there's at least one reddish pixel in the image
+    # when context dirs are NOT set for the pediatric cancer dataset.
+    # (tests the regex associations with default image paths)
+    pediatric_cancer_dataset_with_modified_image_paths = pd.read_parquet(
+        path=cytotable_pediatric_cancer_atlas_parquet
+    )
+    # fmt: off
+    pediatric_cancer_dataset_with_modified_image_paths = (
+        pediatric_cancer_dataset_with_modified_image_paths.assign(
+        Image_PathName_OrigAGP=(
+            f"{pathlib.Path(cytotable_pediatric_cancer_atlas_parquet).parent}/images/orig"
+        ),
+        Image_PathName_OrigDNA=(
+            f"{pathlib.Path(cytotable_pediatric_cancer_atlas_parquet).parent}/images/orig"
+        ),
+    )
+    )
+    # fmt: on
+
+    assert cytodataframe_image_display_contains_pixels(
+        frame=CytoDataFrame(
+            data=pediatric_cancer_dataset_with_modified_image_paths,
+            data_outline_context_dir=f"{pathlib.Path(cytotable_pediatric_cancer_atlas_parquet).parent}/images/outlines",
+            segmentation_file_regex={
+                r"CellsOutlines_BR(\d+)_C(\d{2})_\d+\.tiff": r".*ch3.*\.tiff",
+                r"NucleiOutlines_BR(\d+)_C(\d{2})_\d+\.tiff": r".*ch5.*\.tiff",
+            },
+        ),
+        image_cols=[
+            "Image_FileName_OrigAGP",
+            "Image_FileName_OrigDNA",
+        ],
+        color_conditions={"green": None, "red": 50, "blue": None},
     ), "The pediatric cancer atlas speckles images do not contain green outlines."
 
 
