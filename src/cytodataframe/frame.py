@@ -91,6 +91,8 @@ class CytoDataFrame(pd.DataFrame):
                 Image path data for the image files.
             data_bounding_box (Optional[pd.DataFrame]):
                 Bounding box data for the DataFrame images.
+            compartment_center_xy: Optional[pd.DataFrame]:
+                Center coordinates for the compartments in the DataFrame.
             data_mask_context_dir: Optional[str]:
                 Directory context for the mask data for images.
             data_outline_context_dir: Optional[str]:
@@ -117,6 +119,7 @@ class CytoDataFrame(pd.DataFrame):
             ),
             "data_image_paths": None,
             "data_bounding_box": None,
+            "compartment_center_xy": None,
             "data_mask_context_dir": (
                 data_mask_context_dir if data_mask_context_dir is not None else None
             ),
@@ -182,6 +185,12 @@ class CytoDataFrame(pd.DataFrame):
             else data_bounding_box
         )
 
+        self._custom_attrs["compartment_center_xy"] = (
+            self.get_compartment_center_xy_from_data()
+            if data_bounding_box is None
+            else data_bounding_box
+        )
+
         self._custom_attrs["data_image_paths"] = (
             self.get_image_paths_from_data(image_cols=self.find_image_columns())
             if data_image_paths is None
@@ -216,6 +225,7 @@ class CytoDataFrame(pd.DataFrame):
                 data_context_dir=self._custom_attrs["data_context_dir"],
                 data_image_paths=self._custom_attrs["data_image_paths"],
                 data_bounding_box=self._custom_attrs["data_bounding_box"],
+                compartment_center_xy=self._custom_attrs["compartment_center_xy"],
                 data_mask_context_dir=self._custom_attrs["data_mask_context_dir"],
                 data_outline_context_dir=self._custom_attrs["data_outline_context_dir"],
                 segmentation_file_regex=self._custom_attrs["segmentation_file_regex"],
@@ -254,6 +264,7 @@ class CytoDataFrame(pd.DataFrame):
                 data_context_dir=self._custom_attrs["data_context_dir"],
                 data_image_paths=self._custom_attrs["data_image_paths"],
                 data_bounding_box=self._custom_attrs["data_bounding_box"],
+                compartment_center_xy=self._custom_attrs["compartment_center_xy"],
                 data_mask_context_dir=self._custom_attrs["data_mask_context_dir"],
                 data_outline_context_dir=self._custom_attrs["data_outline_context_dir"],
                 segmentation_file_regex=self._custom_attrs["segmentation_file_regex"],
@@ -385,6 +396,75 @@ class CytoDataFrame(pd.DataFrame):
 
         logger.debug(
             "Found no bounding box columns.",
+        )
+
+        return None
+
+    def get_compartment_center_xy_from_data(
+        self: CytoDataFrame_type,
+    ) -> Optional[CytoDataFrame_type]:
+        """
+        Retrieves compartment center xy data from the
+        DataFrame based on predefined column groups.
+
+        This method identifies specific groups of columns representing center xy
+        coordinates for different cellular components (cytoplasm, nuclei, cells) and
+        checks for their presence in the DataFrame. If all required columns are present,
+        it filters and returns a new CytoDataFrame instance containing only these
+        columns.
+
+        Returns:
+            Optional[CytoDataFrame_type]:
+                A new instance of CytoDataFrame containing the bounding box columns if
+                they exist in the DataFrame. Returns None if the required columns
+                are not found.
+
+        """
+        # Define column groups and their corresponding conditions
+        column_groups = {
+            "cyto": [
+                "Cytoplasm_Location_Center_X",
+                "Cytoplasm_Location_Center_Y",
+            ],
+            "nuclei": [
+                "Nuclei_Location_Center_X",
+                "Nuclei_Location_Center_Y",
+            ],
+            "cells": [
+                "Cells_Location_Center_X",
+                "Cells_Location_Center_Y",
+            ],
+            "cyto_w_meta": [
+                "Metadata_Cytoplasm_Location_Center_X",
+                "Metadata_Cytoplasm_Location_Center_Y",
+            ],
+            "nuclei_w_meta": [
+                "Metadata_Nuclei_Location_Center_X",
+                "Metadata_Nuclei_Location_Center_Y",
+            ],
+            "cells_w_meta": [
+                "Metadata_Cells_Location_Center_X",
+                "Metadata_Cells_Location_Center_Y",
+            ],
+        }
+
+        # Determine which group of columns to select based on availability in self.data
+        selected_group = None
+        for group, cols in column_groups.items():
+            if all(col in self.columns.tolist() for col in cols):
+                selected_group = group
+                break
+
+        # Assign the selected columns to self.compartment_center_xy
+        if selected_group:
+            logger.debug(
+                "Compartment center xy columns found: %s",
+                column_groups[selected_group],
+            )
+            return self.filter(items=column_groups[selected_group])
+
+        logger.debug(
+            "Found no compartment center xy columns.",
         )
 
         return None
@@ -628,10 +708,11 @@ class CytoDataFrame(pd.DataFrame):
 
         return None
 
-    def process_image_data_as_html_display(
+    def process_image_data_as_html_display(  # noqa: PLR0912, C901
         self: CytoDataFrame_type,
         data_value: Any,  # noqa: ANN401
         bounding_box: Tuple[int, int, int, int],
+        compartment_center_xy: Optional[Tuple[int, int]] = None,
         image_path: Optional[str] = None,
     ) -> str:
         """
@@ -645,6 +726,10 @@ class CytoDataFrame(pd.DataFrame):
                 The value to search for in the file system or as the image data.
             bounding_box (Tuple[int, int, int, int]):
                 The bounding box to crop the image.
+            compartment_center_xy (Optional[Tuple[int, int]]):
+                The center coordinates of the compartment.
+            image_path (Optional[str]):
+                The path to the image file.
 
         Returns:
             str:
@@ -747,7 +832,19 @@ class CytoDataFrame(pd.DataFrame):
         if prepared_image is None:
             prepared_image = orig_image_array
 
-        # Step 5: Crop the image based on the bounding box and encode it to PNG format
+        # Step 5: Add a red dot for the compartment center before cropping
+        if compartment_center_xy is not None:
+            center_x, center_y = map(int, compartment_center_xy)  # Ensure integers
+            if (
+                0 <= center_y < prepared_image.shape[0]
+                and 0 <= center_x < prepared_image.shape[1]
+            ):
+                rr, cc = skimage.draw.disk(
+                    (center_y, center_x), radius=5, shape=prepared_image.shape
+                )
+                prepared_image[rr, cc] = [255, 0, 0]  # Red color in RGB
+
+        # Step 6: Crop the image based on the bounding box and encode it to PNG format
         try:
             x_min, y_min, x_max, y_max = map(int, bounding_box)  # Ensure integers
             cropped_img_array = prepared_image[
@@ -765,7 +862,7 @@ class CytoDataFrame(pd.DataFrame):
 
         logger.debug("Cropped image array shape: %s", cropped_img_array.shape)
 
-        # Step 6:
+        # Step 7:
         try:
             # Save cropped image to buffer
             png_bytes_io = BytesIO()
@@ -781,7 +878,7 @@ class CytoDataFrame(pd.DataFrame):
 
         logger.debug("Image processed successfully and being sent to HTML for display.")
 
-        # Return HTML image display as a base64-encoded PNG
+        # Step 8: Return HTML image display as a base64-encoded PNG
         return (
             '<img src="data:image/png;base64,'
             f'{base64.b64encode(png_bytes).decode("utf-8")}" style="width:300px;"/>'
@@ -813,7 +910,7 @@ class CytoDataFrame(pd.DataFrame):
             logging.debug("Detected display rows: %s", start_display + end_display)
             return start_display + end_display
 
-    def _repr_html_(
+    def _repr_html_(  # noqa: C901, PLR0912
         self: CytoDataFrame_type, key: Optional[Union[int, str]] = None
     ) -> str:
         """
@@ -861,6 +958,21 @@ class CytoDataFrame(pd.DataFrame):
             else:
                 data = self.copy()
 
+            # re-add compartment center xy box cols if they are no
+            # longer available as in cases of masking or accessing
+            # various pandas attr's
+            compartment_center_externally_joined = False
+
+            if self._custom_attrs["compartment_center_xy"] is not None and not all(
+                col in self.columns.tolist()
+                for col in self._custom_attrs["compartment_center_xy"].columns.tolist()
+            ):
+                logger.debug("Re-adding bounding box columns.")
+                data = self.join(other=self._custom_attrs["compartment_center_xy"])
+                compartment_center_externally_joined = True
+            else:
+                data = self.copy()
+
             # re-add image path (dirs for images) cols if they are no
             # longer available as in cases of masking or accessing
             # various pandas attr's
@@ -887,6 +999,11 @@ class CytoDataFrame(pd.DataFrame):
 
             # gather bounding box columns for use below
             bounding_box_cols = self._custom_attrs["data_bounding_box"].columns.tolist()
+
+            # gather bounding box columns for use below
+            compartment_center_xy_cols = self._custom_attrs[
+                "compartment_center_xy"
+            ].columns.tolist()
 
             for image_col in image_cols:
                 data.loc[display_indices, image_col] = data.loc[display_indices].apply(
@@ -926,6 +1043,26 @@ class CytoDataFrame(pd.DataFrame):
                                 )
                             ],
                         ),
+                        compartment_center_xy=(
+                            # rows below are specified using the column name to
+                            # determine which part of the bounding box the columns
+                            # relate to (the list of column names could be in
+                            # various order).
+                            row[
+                                next(
+                                    col
+                                    for col in compartment_center_xy_cols
+                                    if "X" in col
+                                )
+                            ],
+                            row[
+                                next(
+                                    col
+                                    for col in compartment_center_xy_cols
+                                    if "Y" in col
+                                )
+                            ],
+                        ),
                         # set the image path based on the image_path cols.
                         image_path=(
                             row[image_path_cols[image_col]]
@@ -939,6 +1076,11 @@ class CytoDataFrame(pd.DataFrame):
             if bounding_box_externally_joined:
                 data = data.drop(
                     self._custom_attrs["data_bounding_box"].columns.tolist(), axis=1
+                )
+
+            if compartment_center_externally_joined:
+                data = data.drop(
+                    self._custom_attrs["compartment_center_xy"].columns.tolist(), axis=1
                 )
 
             if image_paths_externally_joined:
