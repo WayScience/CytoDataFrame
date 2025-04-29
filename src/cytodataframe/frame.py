@@ -354,7 +354,7 @@ class CytoDataFrame(pd.DataFrame):
         """
 
         # list of methods by name from Pandas DataFrame class
-        methods_to_wrap = ["head", "tail", "sort_values", "sample"]
+        methods_to_wrap = ["head", "tail", "sort_values", "sample", "transpose"]
 
         # set the wrapped method for the class instance
         for method_name in methods_to_wrap:
@@ -638,9 +638,9 @@ class CytoDataFrame(pd.DataFrame):
         """
 
         return {
-            col: col.replace("FileName", "PathName")
+            str(col): str(col).replace("FileName", "PathName")
             for col in image_cols
-            if col.replace("FileName", "PathName") in all_cols
+            if str(col).replace("FileName", "PathName") in all_cols
         }
 
     def search_for_mask_or_outline(  # noqa: PLR0913, PLR0911
@@ -771,6 +771,9 @@ class CytoDataFrame(pd.DataFrame):
             compartment_center_xy,
             image_path,
         )
+
+        # stringify the data value in case it isn't a string
+        data_value = str(data_value)
 
         candidate_path = None
         # Get the pattern map for segmentation file regex
