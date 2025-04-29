@@ -40,7 +40,6 @@ from .image import (
 )
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 # provide backwards compatibility for Self type in earlier Python versions.
 # see: https://peps.python.org/pep-0484/#annotating-instance-and-class-methods
@@ -73,7 +72,7 @@ class CytoDataFrame(pd.DataFrame):
         data_context_dir: Optional[str] = None,
         data_image_paths: Optional[pd.DataFrame] = None,
         data_bounding_box: Optional[pd.DataFrame] = None,
-        compartment_center_xy: Optional[pd.DataFrame] = None,
+        compartment_center_xy: Optional[Union[pd.DataFrame, bool]] = None,
         data_mask_context_dir: Optional[str] = None,
         data_outline_context_dir: Optional[str] = None,
         segmentation_file_regex: Optional[Dict[str, str]] = None,
@@ -93,8 +92,13 @@ class CytoDataFrame(pd.DataFrame):
                 Image path data for the image files.
             data_bounding_box (Optional[pd.DataFrame]):
                 Bounding box data for the DataFrame images.
-            compartment_center_xy: Optional[pd.DataFrame]:
+            compartment_center_xy: Optional[Union[pd.DataFrame, bool]]:
                 Center coordinates for the compartments in the DataFrame.
+                If the value is None the default behavior is to find columns
+                related to the compartment center xy data and indicate red dots
+                where those points are within the cropped image display through
+                Jupyter notebooks. If the value is False then no compartment
+                center xy data will be used for the DataFrame.
             data_mask_context_dir: Optional[str]:
                 Directory context for the mask data for images.
             data_outline_context_dir: Optional[str]:
@@ -189,8 +193,10 @@ class CytoDataFrame(pd.DataFrame):
 
         self._custom_attrs["compartment_center_xy"] = (
             self.get_compartment_center_xy_from_data()
-            if compartment_center_xy is None
+            if compartment_center_xy is None or compartment_center_xy is True
             else compartment_center_xy
+            if compartment_center_xy is not False
+            else None
         )
 
         self._custom_attrs["data_image_paths"] = (
@@ -989,7 +995,12 @@ class CytoDataFrame(pd.DataFrame):
                 )
                 compartment_center_externally_joined = True
             else:
-                data = data if compartment_center_externally_joined else self.copy()
+                data = (
+                    data
+                    if bounding_box_externally_joined
+                    or compartment_center_externally_joined
+                    else self.copy()
+                )
 
             # Re-add image path columns if they are no longer available
             image_paths_externally_joined = False
@@ -1001,6 +1012,11 @@ class CytoDataFrame(pd.DataFrame):
                 for col in self._custom_attrs["data_image_paths"].columns.tolist()
             ):
                 logger.debug("Re-adding image path columns.")
+                logger.debug(
+                    "bounding_box: %s",
+                    compartment_center_externally_joined
+                    or bounding_box_externally_joined,
+                )
                 data = (
                     data.join(other=self._custom_attrs["data_image_paths"])
                     if compartment_center_externally_joined
@@ -1029,10 +1045,11 @@ class CytoDataFrame(pd.DataFrame):
             # gather bounding box columns for use below
             bounding_box_cols = self._custom_attrs["data_bounding_box"].columns.tolist()
 
-            # gather bounding box columns for use below
-            compartment_center_xy_cols = self._custom_attrs[
-                "compartment_center_xy"
-            ].columns.tolist()
+            # gather compartment_xy columns for use below
+            if self._custom_attrs["compartment_center_xy"] is not None:
+                compartment_center_xy_cols = self._custom_attrs[
+                    "compartment_center_xy"
+                ].columns.tolist()
 
             for image_col in image_cols:
                 data.loc[display_indices, image_col] = data.loc[display_indices].apply(
@@ -1073,24 +1090,28 @@ class CytoDataFrame(pd.DataFrame):
                             ],
                         ),
                         compartment_center_xy=(
-                            # rows below are specified using the column name to
-                            # determine which part of the bounding box the columns
-                            # relate to (the list of column names could be in
-                            # various order).
-                            row[
-                                next(
-                                    col
-                                    for col in compartment_center_xy_cols
-                                    if "X" in col
-                                )
-                            ],
-                            row[
-                                next(
-                                    col
-                                    for col in compartment_center_xy_cols
-                                    if "Y" in col
-                                )
-                            ],
+                            (
+                                # rows below are specified using the column name to
+                                # determine which part of the bounding box the columns
+                                # relate to (the list of column names could be in
+                                # various order).
+                                row[
+                                    next(
+                                        col
+                                        for col in compartment_center_xy_cols
+                                        if "X" in col
+                                    )
+                                ],
+                                row[
+                                    next(
+                                        col
+                                        for col in compartment_center_xy_cols
+                                        if "Y" in col
+                                    )
+                                ],
+                            )
+                            if self._custom_attrs["compartment_center_xy"] is not None
+                            else None
                         ),
                         # set the image path based on the image_path cols.
                         image_path=(

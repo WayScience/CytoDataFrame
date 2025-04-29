@@ -123,7 +123,7 @@ def test_repr_html_green_pixels(
             data_mask_context_dir=f"{pathlib.Path(cytotable_NF1_data_parquet_shrunken).parent}/Plate_2_masks",
         ),
         image_cols=["Image_FileName_DAPI", "Image_FileName_GFP", "Image_FileName_RFP"],
-        color_conditions={"green": 50, "red": None, "blue": None},
+        color_conditions={"green": 255, "red": None, "blue": None},
     ), "The NF1 images do not contain green outlines."
 
     # Ensure there's at least one greenish pixel in the image
@@ -141,7 +141,7 @@ def test_repr_html_green_pixels(
             data_mask_context_dir=f"{pathlib.Path(cytotable_NF1_data_parquet_shrunken).parent}/Plate_2_masks",
         ),
         image_cols=["Image_FileName_DAPI", "Image_FileName_GFP", "Image_FileName_RFP"],
-        color_conditions={"green": 50, "red": None, "blue": None},
+        color_conditions={"green": 255, "red": None, "blue": None},
     ), "The NF1 images do not contain green outlines."
 
     # Ensure there's at least one greenish pixel in the image
@@ -157,7 +157,7 @@ def test_repr_html_green_pixels(
             "Image_FileName_DAPI",
             "Image_FileName_GOLD",
         ],
-        color_conditions={"green": 50, "red": None, "blue": None},
+        color_conditions={"green": 255, "red": None, "blue": None},
     ), "The nuclear speckles images do not contain green outlines."
 
     # Ensure there's at least one greenish pixel in the image
@@ -176,7 +176,7 @@ def test_repr_html_green_pixels(
             "Image_FileName_OrigAGP",
             "Image_FileName_OrigDNA",
         ],
-        color_conditions={"green": 50, "red": None, "blue": None},
+        color_conditions={"green": 255, "red": None, "blue": None},
     ), "The pediatric cancer atlas speckles images do not contain green outlines."
 
     # Ensure there's at least one greenish pixel in the image
@@ -211,7 +211,7 @@ def test_repr_html_green_pixels(
             "Image_FileName_OrigAGP",
             "Image_FileName_OrigDNA",
         ],
-        color_conditions={"green": 50, "red": None, "blue": None},
+        color_conditions={"green": 255, "red": None, "blue": None},
     ), "The pediatric cancer atlas speckles images do not contain green outlines."
 
 
@@ -233,8 +233,21 @@ def test_repr_html_red_pixels(
             data_mask_context_dir=f"{pathlib.Path(cytotable_NF1_data_parquet_shrunken).parent}/Plate_2_masks",
         ),
         image_cols=["Image_FileName_DAPI", "Image_FileName_GFP", "Image_FileName_RFP"],
-        color_conditions={"green": None, "red": 50, "blue": None},
-    ), "The NF1 images do not contain green outlines."
+        color_conditions={"green": None, "red": 255, "blue": None},
+    ), "The NF1 images do not contain red dots."
+
+    # Ensure there are no reddish pixels in the image
+    # when context dirs are set for the NF1 dataset.
+    assert not cytodataframe_image_display_contains_pixels(
+        frame=CytoDataFrame(
+            data=cytotable_NF1_data_parquet_shrunken,
+            data_context_dir=f"{pathlib.Path(cytotable_NF1_data_parquet_shrunken).parent}/Plate_2_images",
+            data_mask_context_dir=f"{pathlib.Path(cytotable_NF1_data_parquet_shrunken).parent}/Plate_2_masks",
+            compartment_center_xy=False,
+        ),
+        image_cols=["Image_FileName_DAPI", "Image_FileName_GFP", "Image_FileName_RFP"],
+        color_conditions={"green": None, "red": 255, "blue": None},
+    ), "The NF1 images contain red pixels when it shouldn't."
 
     # Ensure there's at least one greenish pixel in the image
     # when context dirs are NOT set for the NF1 dataset.
@@ -251,8 +264,8 @@ def test_repr_html_red_pixels(
             data_mask_context_dir=f"{pathlib.Path(cytotable_NF1_data_parquet_shrunken).parent}/Plate_2_masks",
         ),
         image_cols=["Image_FileName_DAPI", "Image_FileName_GFP", "Image_FileName_RFP"],
-        color_conditions={"green": None, "red": 50, "blue": None},
-    ), "The NF1 images do not contain green outlines."
+        color_conditions={"green": None, "red": 255, "blue": None},
+    ), "The NF1 images do not contain red dots."
 
     # Ensure there's at least one reddish pixel in the image
     # when context dirs are set for the nuclear speckles dataset.
@@ -267,8 +280,8 @@ def test_repr_html_red_pixels(
             "Image_FileName_DAPI",
             "Image_FileName_GOLD",
         ],
-        color_conditions={"green": None, "red": 50, "blue": None},
-    ), "The nuclear speckles images do not contain green outlines."
+        color_conditions={"green": None, "red": 255, "blue": None},
+    ), "The nuclear speckles images do not contain red dots."
 
     # Ensure there's at least one reddish pixel in the image
     # when context dirs are set for the pediatric cancer dataset.
@@ -286,8 +299,8 @@ def test_repr_html_red_pixels(
             "Image_FileName_OrigAGP",
             "Image_FileName_OrigDNA",
         ],
-        color_conditions={"green": None, "red": 50, "blue": None},
-    ), "The pediatric cancer atlas speckles images do not contain green outlines."
+        color_conditions={"green": None, "red": 255, "blue": None},
+    ), "The pediatric cancer atlas speckles images do not contain red dots."
 
     # Ensure there's at least one reddish pixel in the image
     # when context dirs are NOT set for the pediatric cancer dataset.
@@ -321,8 +334,8 @@ def test_repr_html_red_pixels(
             "Image_FileName_OrigAGP",
             "Image_FileName_OrigDNA",
         ],
-        color_conditions={"green": None, "red": 50, "blue": None},
-    ), "The pediatric cancer atlas speckles images do not contain green outlines."
+        color_conditions={"green": None, "red": 255, "blue": None},
+    ), "The pediatric cancer atlas speckles images do not contain red dots."
 
 
 def test_return_cytodataframe(cytotable_NF1_data_parquet_shrunken: str):
