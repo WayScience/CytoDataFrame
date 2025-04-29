@@ -835,12 +835,18 @@ class CytoDataFrame(pd.DataFrame):
         # Step 5: Add a red dot for the compartment center before cropping
         if compartment_center_xy is not None:
             center_x, center_y = map(int, compartment_center_xy)  # Ensure integers
+
+            # Convert grayscale image to RGB if necessary
+            # Check if the image is grayscale
+            if len(prepared_image.shape) == 2:  # noqa: PLR2004
+                prepared_image = skimage.color.gray2rgb(prepared_image)
+
             if (
                 0 <= center_y < prepared_image.shape[0]
                 and 0 <= center_x < prepared_image.shape[1]
             ):
                 rr, cc = skimage.draw.disk(
-                    (center_y, center_x), radius=5, shape=prepared_image.shape
+                    (center_y, center_x), radius=5, shape=prepared_image.shape[:2]
                 )
                 prepared_image[rr, cc] = [255, 0, 0]  # Red color in RGB
 
