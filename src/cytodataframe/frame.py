@@ -40,6 +40,7 @@ from .image import (
 )
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 # provide backwards compatibility for Self type in earlier Python versions.
 # see: https://peps.python.org/pep-0484/#annotating-instance-and-class-methods
@@ -423,29 +424,29 @@ class CytoDataFrame(pd.DataFrame):
         """
         # Define column groups and their corresponding conditions
         column_groups = {
-            "cyto": [
-                "Cytoplasm_Location_Center_X",
-                "Cytoplasm_Location_Center_Y",
-            ],
             "nuclei": [
                 "Nuclei_Location_Center_X",
                 "Nuclei_Location_Center_Y",
-            ],
-            "cells": [
-                "Cells_Location_Center_X",
-                "Cells_Location_Center_Y",
-            ],
-            "cyto_w_meta": [
-                "Metadata_Cytoplasm_Location_Center_X",
-                "Metadata_Cytoplasm_Location_Center_Y",
             ],
             "nuclei_w_meta": [
                 "Metadata_Nuclei_Location_Center_X",
                 "Metadata_Nuclei_Location_Center_Y",
             ],
+            "cells": [
+                "Cells_Location_Center_X",
+                "Cells_Location_Center_Y",
+            ],
             "cells_w_meta": [
                 "Metadata_Cells_Location_Center_X",
                 "Metadata_Cells_Location_Center_Y",
+            ],
+            "cyto": [
+                "Cytoplasm_Location_Center_X",
+                "Cytoplasm_Location_Center_Y",
+            ],
+            "cyto_w_meta": [
+                "Metadata_Cytoplasm_Location_Center_X",
+                "Metadata_Cytoplasm_Location_Center_Y",
             ],
         }
 
@@ -709,7 +710,7 @@ class CytoDataFrame(pd.DataFrame):
 
         return None
 
-    def process_image_data_as_html_display(  # noqa: PLR0912, C901
+    def process_image_data_as_html_display(  # noqa: PLR0912, C901, PLR0915
         self: CytoDataFrame_type,
         data_value: Any,  # noqa: ANN401
         bounding_box: Tuple[int, int, int, int],
@@ -741,10 +742,12 @@ class CytoDataFrame(pd.DataFrame):
         logger.debug(
             (
                 "Processing image data as HTML for display."
-                "Data value: %s , Bounding box: %s , Image path: %s"
+                "Data value: %s , Bounding box: %s , "
+                "Compartment center xy: %s, Image path: %s"
             ),
             data_value,
             bounding_box,
+            compartment_center_xy,
             image_path,
         )
 
@@ -846,8 +849,16 @@ class CytoDataFrame(pd.DataFrame):
                 0 <= center_y < prepared_image.shape[0]
                 and 0 <= center_x < prepared_image.shape[1]
             ):
+                # Calculate the radius as a fraction of the bounding box size
+                x_min, y_min, x_max, y_max = map(int, bounding_box)
+                box_width = x_max - x_min
+                box_height = y_max - y_min
+                radius = max(
+                    1, int(min(box_width, box_height) * 0.03)
+                )  # 3% of the smaller dimension
+
                 rr, cc = skimage.draw.disk(
-                    (center_y, center_x), radius=5, shape=prepared_image.shape[:2]
+                    (center_y, center_x), radius=radius, shape=prepared_image.shape[:2]
                 )
                 prepared_image[rr, cc] = [255, 0, 0]  # Red color in RGB
 
@@ -951,10 +962,8 @@ class CytoDataFrame(pd.DataFrame):
             max_cols = get_option("display.max_columns")
             show_dimensions = get_option("display.show_dimensions")
 
-            # re-add bounding box cols if they are no longer available as in cases
-            # of masking or accessing various pandas attr's
+            # Re-add bounding box columns if they are no longer available
             bounding_box_externally_joined = False
-
             if self._custom_attrs["data_bounding_box"] is not None and not all(
                 col in self.columns.tolist()
                 for col in self._custom_attrs["data_bounding_box"].columns.tolist()
@@ -963,35 +972,48 @@ class CytoDataFrame(pd.DataFrame):
                 data = self.join(other=self._custom_attrs["data_bounding_box"])
                 bounding_box_externally_joined = True
             else:
-                data = self.copy()
+                data = self.copy() if not bounding_box_externally_joined else data
 
-            # re-add compartment center xy box cols if they are no
-            # longer available as in cases of masking or accessing
-            # various pandas attr's
+            # Re-add compartment center xy columns if they are no longer available
             compartment_center_externally_joined = False
-
             if self._custom_attrs["compartment_center_xy"] is not None and not all(
-                col in self.columns.tolist()
+                col
+                in (data if bounding_box_externally_joined else self).columns.tolist()
                 for col in self._custom_attrs["compartment_center_xy"].columns.tolist()
             ):
-                logger.debug("Re-adding bounding box columns.")
-                data = self.join(other=self._custom_attrs["compartment_center_xy"])
+                logger.debug("Re-adding compartment center xy columns.")
+                data = (
+                    data.join(other=self._custom_attrs["compartment_center_xy"])
+                    if bounding_box_externally_joined
+                    else self.join(other=self._custom_attrs["compartment_center_xy"])
+                )
                 compartment_center_externally_joined = True
             else:
-                data = self.copy()
+                data = data if compartment_center_externally_joined else self.copy()
 
-            # re-add image path (dirs for images) cols if they are no
-            # longer available as in cases of masking or accessing
-            # various pandas attr's
+            # Re-add image path columns if they are no longer available
             image_paths_externally_joined = False
-
             if self._custom_attrs["data_image_paths"] is not None and not all(
-                col in self.columns.tolist()
+                col
+                in (
+                    data if compartment_center_externally_joined else self
+                ).columns.tolist()
                 for col in self._custom_attrs["data_image_paths"].columns.tolist()
             ):
                 logger.debug("Re-adding image path columns.")
-                data = data.join(other=self._custom_attrs["data_image_paths"])
+                data = (
+                    data.join(other=self._custom_attrs["data_image_paths"])
+                    if compartment_center_externally_joined
+                    or bounding_box_externally_joined
+                    else self.join(other=self._custom_attrs["data_image_paths"])
+                )
                 image_paths_externally_joined = True
+            else:
+                data = (
+                    data
+                    if image_paths_externally_joined or bounding_box_externally_joined
+                    else self.copy()
+                )
 
                 # determine if we have image_cols to display
             if image_cols := self.find_image_columns():
