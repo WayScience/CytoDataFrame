@@ -72,6 +72,7 @@ class CytoDataFrame(pd.DataFrame):
         data_context_dir: Optional[str] = None,
         data_image_paths: Optional[pd.DataFrame] = None,
         data_bounding_box: Optional[pd.DataFrame] = None,
+        compartment_center_xy: Optional[pd.DataFrame] = None,
         data_mask_context_dir: Optional[str] = None,
         data_outline_context_dir: Optional[str] = None,
         segmentation_file_regex: Optional[Dict[str, str]] = None,
@@ -187,8 +188,8 @@ class CytoDataFrame(pd.DataFrame):
 
         self._custom_attrs["compartment_center_xy"] = (
             self.get_compartment_center_xy_from_data()
-            if data_bounding_box is None
-            else data_bounding_box
+            if compartment_center_xy is None
+            else compartment_center_xy
         )
 
         self._custom_attrs["data_image_paths"] = (
