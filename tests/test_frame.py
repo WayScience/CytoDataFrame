@@ -350,3 +350,40 @@ def test_return_cytodataframe(cytotable_NF1_data_parquet_shrunken: str):
     assert isinstance(cdf.tail(), CytoDataFrame)
     assert isinstance(cdf.sort_values(by="Metadata_ImageNumber"), CytoDataFrame)
     assert isinstance(cdf.sample(n=5), CytoDataFrame)
+
+
+def test_cytodataframe_dynamic_width_and_height(
+    cytotable_NF1_data_parquet_shrunken: str,
+):
+    """
+    Tests to ensure we return a CytoDataFrame
+    from extended Pandas methods.
+    """
+
+    cdf = CytoDataFrame(
+        data=cytotable_NF1_data_parquet_shrunken,
+        data_context_dir=f"{pathlib.Path(cytotable_NF1_data_parquet_shrunken).parent}/Plate_2_images",
+        data_mask_context_dir=f"{pathlib.Path(cytotable_NF1_data_parquet_shrunken).parent}/Plate_2_masks",
+        # set the width to 100px and height to auto for images
+        display_options={"width": "100px", "height": "auto"},
+    )
+
+    # gather the html of the output for the dataframe
+    cdf_image_html = cdf[
+        ["Image_FileName_DAPI", "Image_FileName_GFP", "Image_FileName_RFP"]
+    ][1:2]._repr_html_()
+
+    # test that the html string contains the customized width and height
+    # constraints on the 3 images which display within the html output.
+    assert cdf_image_html.count("width:100px") == 3
+    assert cdf_image_html.count("height:auto") == 3
+
+    # transpose and test for the same to ensure the images are
+    # formatted despite being transposed (that we didn't lose them
+    # in the process).
+    cdf_image_html = cdf[
+        ["Image_FileName_DAPI", "Image_FileName_GFP", "Image_FileName_RFP"]
+    ][1:2].T._repr_html_()
+
+    assert cdf_image_html.count("width:100px") == 3
+    assert cdf_image_html.count("height:auto") == 3

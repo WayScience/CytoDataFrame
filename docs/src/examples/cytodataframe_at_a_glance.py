@@ -69,6 +69,41 @@ CytoDataFrame(
 
 
 # %%time
+# view JUMP plate BR00117006 with images and change the display width
+CytoDataFrame(
+    data=f"{jump_data_path}/BR00117006_shrunken.parquet",
+    data_context_dir=f"{jump_data_path}/images/orig",
+    data_outline_context_dir=f"{jump_data_path}/images/outlines",
+    display_options={"width": "100"},
+)[
+    [
+        "Metadata_ImageNumber",
+        "Cells_Number_Object_Number",
+        "Image_FileName_OrigAGP",
+        "Image_FileName_OrigDNA",
+        "Image_FileName_OrigRNA",
+    ]
+][:3]
+
+# %%time
+# view JUMP plate BR00117006 with images, change the display height and width
+# and also transpose for a different view of things.
+CytoDataFrame(
+    data=f"{jump_data_path}/BR00117006_shrunken.parquet",
+    data_context_dir=f"{jump_data_path}/images/orig",
+    data_outline_context_dir=f"{jump_data_path}/images/outlines",
+    display_options={"width": "200px", "height": "auto"},
+)[
+    [
+        "Metadata_ImageNumber",
+        "Cells_Number_Object_Number",
+        "Image_FileName_OrigAGP",
+        "Image_FileName_OrigDNA",
+        "Image_FileName_OrigRNA",
+    ]
+][:5].T
+
+# %%time
 # view NF1 Cell Painting data with images
 CytoDataFrame(
     data=f"{nf1_cellpainting_path}/Plate_2_with_image_data_shrunken.parquet",
@@ -161,4 +196,4 @@ CytoDataFrame(
         "Image_FileName_OrigAGP",
         "Image_FileName_OrigDNA",
     ]
-][:3]
+]
