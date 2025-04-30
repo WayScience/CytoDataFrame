@@ -975,7 +975,7 @@ class CytoDataFrame(pd.DataFrame):
             half_min_rows = min_rows // 2
             start_display = self.index[:half_min_rows].tolist()
             end_display = self.index[-half_min_rows:].tolist()
-            logging.debug("Detected display rows: %s", start_display + end_display)
+            logger.debug("Detected display rows: %s", start_display + end_display)
             return start_display + end_display
 
     def _repr_html_(  # noqa: C901, PLR0912, PLR0915
@@ -1011,8 +1011,6 @@ class CytoDataFrame(pd.DataFrame):
             min_rows = get_option("display.min_rows")
             max_cols = get_option("display.max_columns")
             show_dimensions = get_option("display.show_dimensions")
-
-            logging.debug("HERE!!!")
 
             if self._custom_attrs["is_transposed"]:
                 # if the data are transposed,
