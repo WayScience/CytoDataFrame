@@ -153,6 +153,7 @@ class CytoDataFrame(pd.DataFrame):
             "display_options": (
                 display_options if display_options is not None else None
             ),
+            "is_transposed": False,
         }
 
         if isinstance(data, CytoDataFrame):
@@ -207,9 +208,7 @@ class CytoDataFrame(pd.DataFrame):
         self._custom_attrs["compartment_center_xy"] = (
             self.get_compartment_center_xy_from_data()
             if compartment_center_xy is None or compartment_center_xy is True
-            else compartment_center_xy
-            if compartment_center_xy is not False
-            else None
+            else compartment_center_xy if compartment_center_xy is not False else None
         )
 
         self._custom_attrs["data_image_paths"] = (
@@ -222,7 +221,9 @@ class CytoDataFrame(pd.DataFrame):
         # instead of Pandas DataFrames.
         self._wrap_methods()
 
-    def __getitem__(self: CytoDataFrame_type, key: Union[int, str]) -> Any:  # noqa: ANN401
+    def __getitem__(
+        self: CytoDataFrame_type, key: Union[int, str]
+    ) -> Any:  # noqa: ANN401
         """
         Returns an element or a slice of the underlying pandas DataFrame.
 
@@ -257,6 +258,7 @@ class CytoDataFrame(pd.DataFrame):
     def _return_cytodataframe(
         self: CytoDataFrame_type,
         method: Callable,
+        method_name: str,
         *args: Tuple[Any, ...],
         **kwargs: Dict[str, Any],
     ) -> Any:  # noqa: ANN401
@@ -267,6 +269,8 @@ class CytoDataFrame(pd.DataFrame):
         Args:
             method (Callable):
                 The method to be called and wrapped.
+            method_name (str):
+                The name of the method to be wrapped.
             *args (Tuple[Any, ...]):
                 Positional arguments to be passed to the method.
             **kwargs (Dict[str, Any]):
@@ -282,7 +286,7 @@ class CytoDataFrame(pd.DataFrame):
         result = method(*args, **kwargs)
         if isinstance(result, pd.DataFrame):
             result = CytoDataFrame(
-                result,
+                data=result,
                 data_context_dir=self._custom_attrs["data_context_dir"],
                 data_image_paths=self._custom_attrs["data_image_paths"],
                 data_bounding_box=self._custom_attrs["data_bounding_box"],
@@ -293,6 +297,10 @@ class CytoDataFrame(pd.DataFrame):
                 image_adjustment=self._custom_attrs["image_adjustment"],
                 display_options=self._custom_attrs["display_options"],
             )
+            # If the method name is transpose we know that
+            # the dataframe has been transposed.
+            if method_name == "transpose" and not self._custom_attrs["is_transposed"]:
+                result._custom_attrs["is_transposed"] = True
         return result
 
     def _wrap_method(self: CytoDataFrame_type, method_name: str) -> Callable:
@@ -315,7 +323,9 @@ class CytoDataFrame(pd.DataFrame):
                 the result is a CytoDataFrame.
         """
 
-        def wrapper(*args: Tuple[Any, ...], **kwargs: Dict[str, Any]) -> Any:  # noqa: ANN401
+        def wrapper(
+            *args: Tuple[Any, ...], **kwargs: Dict[str, Any]
+        ) -> Any:  # noqa: ANN401
             """
             Wraps the specified method to ensure
             it returns a CytoDataFrame.
@@ -342,7 +352,9 @@ class CytoDataFrame(pd.DataFrame):
                     and data bounding box).
             """
             method = getattr(super(CytoDataFrame, self), method_name)
-            return self._return_cytodataframe(method, *args, **kwargs)
+            return self._return_cytodataframe(
+                method=method, method_name=method_name, *args, **kwargs
+            )
 
         return wrapper
 
@@ -1002,6 +1014,14 @@ class CytoDataFrame(pd.DataFrame):
             max_cols = get_option("display.max_columns")
             show_dimensions = get_option("display.show_dimensions")
 
+            logging.debug("HERE!!!")
+
+            if self._custom_attrs["is_transposed"]:
+                # if the data are transposed,
+                # we transpose them back to keep
+                # logic the same here.
+                data = self.transpose()
+
             # Re-add bounding box columns if they are no longer available
             bounding_box_externally_joined = False
             if self._custom_attrs["data_bounding_box"] is not None and not all(
@@ -1009,7 +1029,11 @@ class CytoDataFrame(pd.DataFrame):
                 for col in self._custom_attrs["data_bounding_box"].columns.tolist()
             ):
                 logger.debug("Re-adding bounding box columns.")
-                data = self.join(other=self._custom_attrs["data_bounding_box"])
+                data = (
+                    self.join(other=self._custom_attrs["data_bounding_box"])
+                    if not self._custom_attrs["is_transposed"]
+                    else data.join(other=self._custom_attrs["data_bounding_box"])
+                )
                 bounding_box_externally_joined = True
             else:
                 data = self.copy() if not bounding_box_externally_joined else data
@@ -1066,15 +1090,15 @@ class CytoDataFrame(pd.DataFrame):
                 )
 
                 # determine if we have image_cols to display
-            if image_cols := self.find_image_columns():
+            if image_cols := CytoDataFrame(data).find_image_columns():
                 # attempt to find the image path columns
-                image_path_cols = self.find_image_path_columns(
+                image_path_cols = CytoDataFrame(data).find_image_path_columns(
                     image_cols=image_cols, all_cols=data.columns
                 )
             logger.debug("Image columns found: %s", image_cols)
 
             # gather indices which will be displayed based on pandas configuration
-            display_indices = self.get_displayed_rows()
+            display_indices = CytoDataFrame(data).get_displayed_rows()
 
             # gather bounding box columns for use below
             bounding_box_cols = self._custom_attrs["data_bounding_box"].columns.tolist()
@@ -1171,6 +1195,12 @@ class CytoDataFrame(pd.DataFrame):
                 data = data.drop(
                     self._custom_attrs["data_image_paths"].columns.tolist(), axis=1
                 )
+
+            if self._custom_attrs["is_transposed"]:
+                # retranspose to return the
+                # data in the shape expected
+                # by the user.
+                data = data.transpose()
 
             formatter = fmt.DataFrameFormatter(
                 data,
