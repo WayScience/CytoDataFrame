@@ -208,7 +208,9 @@ class CytoDataFrame(pd.DataFrame):
         self._custom_attrs["compartment_center_xy"] = (
             self.get_compartment_center_xy_from_data()
             if compartment_center_xy is None or compartment_center_xy is True
-            else compartment_center_xy if compartment_center_xy is not False else None
+            else compartment_center_xy
+            if compartment_center_xy is not False
+            else None
         )
 
         self._custom_attrs["data_image_paths"] = (
@@ -221,9 +223,7 @@ class CytoDataFrame(pd.DataFrame):
         # instead of Pandas DataFrames.
         self._wrap_methods()
 
-    def __getitem__(
-        self: CytoDataFrame_type, key: Union[int, str]
-    ) -> Any:  # noqa: ANN401
+    def __getitem__(self: CytoDataFrame_type, key: Union[int, str]) -> Any:  # noqa: ANN401
         """
         Returns an element or a slice of the underlying pandas DataFrame.
 
@@ -323,9 +323,7 @@ class CytoDataFrame(pd.DataFrame):
                 the result is a CytoDataFrame.
         """
 
-        def wrapper(
-            *args: Tuple[Any, ...], **kwargs: Dict[str, Any]
-        ) -> Any:  # noqa: ANN401
+        def wrapper(*args: Tuple[Any, ...], **kwargs: Dict[str, Any]) -> Any:  # noqa: ANN401
             """
             Wraps the specified method to ensure
             it returns a CytoDataFrame.
@@ -775,7 +773,7 @@ class CytoDataFrame(pd.DataFrame):
         logger.debug(
             (
                 "Processing image data as HTML for display."
-                "Data value: %s , Bounding box: %s , "
+                " Data value: %s , Bounding box: %s , "
                 "Compartment center xy: %s, Image path: %s"
             ),
             data_value,
@@ -939,12 +937,12 @@ class CytoDataFrame(pd.DataFrame):
         display_options = self._custom_attrs.get("display_options", {})
         if display_options is None:
             display_options = {}
-        width = display_options.get("width", 300)
+        width = display_options.get("width", "300px")
         height = display_options.get("height", None)
 
-        html_style = [f"width:{width}px"]
+        html_style = [f"width:{width}"]
         if height is not None:
-            html_style.append(f"height:{height}px")
+            html_style.append(f"height:{height}")
 
         html_style_joined = ";".join(html_style)
         base64_image_bytes = base64.b64encode(png_bytes).decode("utf-8")
@@ -980,7 +978,7 @@ class CytoDataFrame(pd.DataFrame):
             logging.debug("Detected display rows: %s", start_display + end_display)
             return start_display + end_display
 
-    def _repr_html_(  # noqa: C901, PLR0912
+    def _repr_html_(  # noqa: C901, PLR0912, PLR0915
         self: CytoDataFrame_type, key: Optional[Union[int, str]] = None
     ) -> str:
         """
