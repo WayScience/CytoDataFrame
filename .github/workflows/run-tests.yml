@@ -14,6 +14,10 @@ jobs:
     steps:
       # checks out the repo
       - uses: actions/checkout@v4
+      - name: Set up Git user
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
       - name: Simulate version tag for cosmicqc install compatibility
         run: |
           git tag v0.0.11
