@@ -2,8 +2,8 @@
 Tests project integration with other packages
 """
 
-import pandas as pd
 import cosmicqc
+import pandas as pd
 
 
 def test_find_outliers_cfret(cytotable_CFReT_data_df: pd.DataFrame):
@@ -32,12 +32,13 @@ def test_find_outliers_cfret(cytotable_CFReT_data_df: pd.DataFrame):
         metadata_columns=metadata_columns,
     )
 
-    # test that we found the appropriate outliers
+    # test that we we can receive a dict by from a chained operation
+    # on the cytodataframe.
     assert (
         type(
             small_area_formfactor_outliers_df.sort_values(
                 list(feature_thresholds)
             ).to_dict(orient="dict")
         )
-        == dict
+        is dict
     )
