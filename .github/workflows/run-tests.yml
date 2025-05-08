@@ -21,11 +21,11 @@ jobs:
       - name: Setup for poetry
         run: |
           python -m pip install poetry
-      - name: Install environment
-        run: poetry install --no-interaction --no-ansi
       - name: Simulate version tag for cosmicqc install compatibility
         run: |
           poetry version 99.0.0
+      - name: Install environment
+        run: poetry install --no-interaction --no-ansi
       # run pre-commit
       - uses: pre-commit/action@v3.0.1
       # run pre-commit ci lite for automated fixes
@@ -49,11 +49,11 @@ jobs:
       - name: Setup for poetry
         run: |
           python -m pip install poetry
-      - name: Install environment
-        run: poetry install --no-interaction --no-ansi
       - name: Simulate version tag for cosmicqc install compatibility
         run: |
           poetry version 99.0.0
+      - name: Install environment
+        run: poetry install --no-interaction --no-ansi
       - name: Run pytest
         # run all tests except those marked generate_report_image
         run: poetry run pytest -m "not generate_report_image"
