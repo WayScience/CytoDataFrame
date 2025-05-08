@@ -59,7 +59,7 @@ jobs:
           git config --global user.email "github-actions@github.com"
       - name: Simulate version tag for cosmicqc install compatibility
         run: |
-          git tag v99.0.0
+          git tag v0.0.99
       - name: Python setup
         uses: actions/setup-python@v5
         with:
