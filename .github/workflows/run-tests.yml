@@ -14,8 +14,9 @@ jobs:
     steps:
       # checks out the repo
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - name: Simulate version tag for cosmicqc install compatibility
+        run: |
+          git tag v0.0.11
       - name: Python setup
         uses: actions/setup-python@v5
         with:
