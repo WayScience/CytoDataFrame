@@ -18,6 +18,10 @@ jobs:
         with:
           # fetch all history for all tags and branches
           fetch-depth: 0
+      - name: Set up Git user
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
       - name: Simulate version tag for cosmicqc install compatibility
         run: |
           git tag v99.0.0
@@ -49,6 +53,10 @@ jobs:
         with:
           # fetch all history for all tags and branches
           fetch-depth: 0
+      - name: Set up Git user
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
       - name: Simulate version tag for cosmicqc install compatibility
         run: |
           git tag v99.0.0
