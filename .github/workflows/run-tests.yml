@@ -13,18 +13,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       # checks out the repo
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          # fetch all history for all tags and branches
-          fetch-depth: 0
-      - name: Set up Git user
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
-      - name: Simulate version tag for cosmicqc install compatibility
-        run: |
-          git tag v99.0.0
+      - uses: actions/checkout@v4
       - name: Python setup
         uses: actions/setup-python@v5
         with:
@@ -34,6 +23,9 @@ jobs:
           python -m pip install poetry
       - name: Install environment
         run: poetry install --no-interaction --no-ansi
+      - name: Simulate version tag for cosmicqc install compatibility
+        run: |
+          poetry version 99.0.0
       # run pre-commit
       - uses: pre-commit/action@v3.0.1
       # run pre-commit ci lite for automated fixes
@@ -50,16 +42,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          # fetch all history for all tags and branches
-          fetch-depth: 0
-      - name: Set up Git user
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
-      - name: Simulate version tag for cosmicqc install compatibility
-        run: |
-          git tag v0.0.99
       - name: Python setup
         uses: actions/setup-python@v5
         with:
@@ -69,6 +51,9 @@ jobs:
           python -m pip install poetry
       - name: Install environment
         run: poetry install --no-interaction --no-ansi
+      - name: Simulate version tag for cosmicqc install compatibility
+        run: |
+          poetry version 99.0.0
       - name: Run pytest
         # run all tests except those marked generate_report_image
         run: poetry run pytest -m "not generate_report_image"
