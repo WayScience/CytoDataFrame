@@ -6,7 +6,7 @@ import cosmicqc
 import pandas as pd
 
 
-def test_find_outliers_cfret(cytotable_CFReT_data_df: pd.DataFrame):
+def test_cosmicqc_find_outliers_cfret(cytotable_CFReT_data_df: pd.DataFrame):
     """
     Testing cosmicqc.find_outliers with CytoTable CFReT data.
     """
