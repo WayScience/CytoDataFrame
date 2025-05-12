@@ -23,14 +23,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Simulate version tag for cosmicqc install compatibility
-        run: |
-          poetry version 99.0.0
       - name: Setup for poetry
         run: |
           python -m pip install poetry poetry-dynamic-versioning
       - name: Install environment
-        run: poetry install --no-interaction --no-ansi
+        run: poetry install --without dev --no-interaction --no-ansi
       - name: poetry build distribution content
         run: poetry build
       - name: Publish package distributions to PyPI
