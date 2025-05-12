@@ -283,6 +283,7 @@ class CytoDataFrame(pd.DataFrame):
                 information (data context directory and data bounding box).
 
         """
+
         result = method(*args, **kwargs)
         if isinstance(result, pd.DataFrame):
             result = CytoDataFrame(
@@ -349,9 +350,18 @@ class CytoDataFrame(pd.DataFrame):
                     information (data context directory
                     and data bounding box).
             """
+
             method = getattr(super(CytoDataFrame, self), method_name)
+
             return self._return_cytodataframe(
-                method=method, method_name=method_name, *args, **kwargs
+                # important: we pass method and method_name
+                # as positional args to avoid collisions
+                # with the method signatures and chained
+                # calls which might be made.
+                method,
+                method_name,
+                *args,
+                **kwargs,
             )
 
         return wrapper
@@ -368,7 +378,7 @@ class CytoDataFrame(pd.DataFrame):
 
         # set the wrapped method for the class instance
         for method_name in methods_to_wrap:
-            setattr(self, method_name, self._wrap_method(method_name))
+            setattr(self, method_name, self._wrap_method(method_name=method_name))
 
     def get_bounding_box_from_data(
         self: CytoDataFrame_type,
