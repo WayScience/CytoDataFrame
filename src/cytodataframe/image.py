@@ -12,7 +12,6 @@ from skimage import draw, exposure
 from skimage.util import img_as_ubyte
 
 
-
 def is_image_too_dark(
     image: Image.Image, pixel_brightness_threshold: float = 10.0
 ) -> bool:
@@ -198,8 +197,7 @@ def draw_outline_on_image_from_mask(
 
 
 def adjust_with_adaptive_histogram_equalization(
-    image: np.ndarray,
-    brightness: int = 50
+    image: np.ndarray, brightness: int = 50
 ) -> np.ndarray:
     """
     Adaptive histogram equalization with brightness and contrast tuning via gamma.
@@ -214,16 +212,26 @@ def adjust_with_adaptive_histogram_equalization(
     b = np.clip(brightness, 0, 100) / 100.0
 
     # Contrast settings (same as before)
-    kernel_frac = (1/4) * (1 - b) + (1/12) * b
+    kernel_frac = (1 / 4) * (1 - b) + (1 / 12) * b
     kernel_size = (
         max(int(image.shape[0] * kernel_frac), 1),
-        max(int(image.shape[1] * kernel_frac), 1)
+        max(int(image.shape[1] * kernel_frac), 1),
     )
 
     clip_limit = 0.1 * (1 - b) + 0.01 * b
     nbins = int(128 * (1 - b) + 1024 * b)
 
-    def equalize_and_adjust(channel):
+    def equalize_and_adjust(channel: np.ndarray) -> np.ndarray:
+        """
+        Internal function to equalize and adjust a single channel.
+
+        Args:
+            channel (np.ndarray):
+                The input channel to be processed.
+        Returns:
+            np.ndarray:
+                The processed channel.
+        """
         eq = exposure.equalize_adapthist(
             channel,
             kernel_size=kernel_size,
@@ -234,18 +242,22 @@ def adjust_with_adaptive_histogram_equalization(
         gamma = 1.0 - brightness_shift * 0.8  # e.g. 1.8 → dark, 0.2 → bright
         return exposure.adjust_gamma(eq, gamma=gamma)
 
-    if image.ndim == 2:
+    if image.ndim == 2:  # noqa: PLR2004
         result = equalize_and_adjust(image)
         return img_as_ubyte(result)
 
-    elif image.ndim == 3 and image.shape[2] == 3:
-        result = np.stack([equalize_and_adjust(image[:, :, i]) for i in range(3)], axis=-1)
+    elif image.ndim == 3 and image.shape[2] == 3:  # noqa: PLR2004
+        result = np.stack(
+            [equalize_and_adjust(image[:, :, i]) for i in range(3)], axis=-1
+        )
         return img_as_ubyte(result)
 
-    elif image.ndim == 3 and image.shape[2] == 4:
+    elif image.ndim == 3 and image.shape[2] == 4:  # noqa: PLR2004
         rgb = image[:, :, :3]
         alpha = image[:, :, 3]
-        result = np.stack([equalize_and_adjust(rgb[:, :, i]) for i in range(3)], axis=-1)
+        result = np.stack(
+            [equalize_and_adjust(rgb[:, :, i]) for i in range(3)], axis=-1
+        )
         return np.dstack([img_as_ubyte(result), alpha])
 
     else:

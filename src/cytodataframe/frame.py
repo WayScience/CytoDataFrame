@@ -6,6 +6,7 @@ import base64
 import logging
 import pathlib
 import re
+import warnings
 from io import BytesIO, StringIO
 from typing import (
     Any,
@@ -18,13 +19,15 @@ from typing import (
     TypeVar,
     Union,
 )
-import warnings
+
+import ipywidgets as widgets
 import numpy as np
 import pandas as pd
 import skimage
 import skimage.io
 import skimage.measure
 from IPython import get_ipython
+from IPython.display import HTML, display
 from pandas._config import (
     get_option,
 )
@@ -38,9 +41,6 @@ from .image import (
     draw_outline_on_image_from_mask,
     draw_outline_on_image_from_outline,
 )
-import ipywidgets as widgets
-from IPython.display import clear_output, display, HTML
-
 
 logger = logging.getLogger(__name__)
 
@@ -158,14 +158,15 @@ class CytoDataFrame(pd.DataFrame):
             ),
             "is_transposed": False,
             # add widget control meta
-            "_widget_state": {"scale": 50.0, "shown": False},
-            "_scale_slider": widgets.FloatSlider(
+            "_widget_state": {"scale": 50, "shown": False},
+            "_scale_slider": widgets.IntSlider(
                 value=50,
                 min=0,
                 max=100,
                 step=1,
-                description="Image equalization:",
+                description="Image adjustment:",
                 continuous_update=False,
+                style={"description_width": "auto"},
             ),
             "_output": widgets.Output(),
         }
@@ -222,7 +223,9 @@ class CytoDataFrame(pd.DataFrame):
         self._custom_attrs["compartment_center_xy"] = (
             self.get_compartment_center_xy_from_data()
             if compartment_center_xy is None or compartment_center_xy is True
-            else compartment_center_xy if compartment_center_xy is not False else None
+            else compartment_center_xy
+            if compartment_center_xy is not False
+            else None
         )
 
         self._custom_attrs["data_image_paths"] = (
@@ -235,9 +238,7 @@ class CytoDataFrame(pd.DataFrame):
         # instead of Pandas DataFrames.
         self._wrap_methods()
 
-    def __getitem__(
-        self: CytoDataFrame_type, key: Union[int, str]
-    ) -> Any:  # noqa: ANN401
+    def __getitem__(self: CytoDataFrame_type, key: Union[int, str]) -> Any:  # noqa: ANN401
         """
         Returns an element or a slice of the underlying pandas DataFrame.
 
@@ -352,9 +353,7 @@ class CytoDataFrame(pd.DataFrame):
                 the result is a CytoDataFrame.
         """
 
-        def wrapper(
-            *args: Tuple[Any, ...], **kwargs: Dict[str, Any]
-        ) -> Any:  # noqa: ANN401
+        def wrapper(*args: Tuple[Any, ...], **kwargs: Dict[str, Any]) -> Any:  # noqa: ANN401
             """
             Wraps the specified method to ensure
             it returns a CytoDataFrame.
@@ -410,11 +409,28 @@ class CytoDataFrame(pd.DataFrame):
         for method_name in methods_to_wrap:
             setattr(self, method_name, self._wrap_method(method_name=method_name))
 
-    def _on_slider_change(self, change):
+    def _on_slider_change(self: CytoDataFrame_type, change: Dict[str, Any]) -> None:
+        """
+        Callback triggered when the image brightness/contrast
+        slider is adjusted.
+
+        This method updates the internal `_widget_state` to reflect
+        the new slider value, clears the current output display, and
+        triggers a re-render of the CytoDataFrame's HTML representation
+        (including image thumbnails) based on the new scale setting.
+
+        Args:
+            change (dict):
+                A dictionary provided by the
+                ipywidgets observer mechanism.
+                Expected to contain a `'new'`
+                key representing the updated slider value.
+        """
 
         self._custom_attrs["_widget_state"]["scale"] = change["new"]
         self._custom_attrs["_output"].clear_output(wait=True)
-        # Redraw dataframe
+
+        # redraw output after adjustments to scale state
         self._render_output()
 
     def get_bounding_box_from_data(
@@ -1032,7 +1048,7 @@ class CytoDataFrame(pd.DataFrame):
             logger.debug("Detected display rows: %s", start_display + end_display)
             return start_display + end_display
 
-    def _generate_jupyter_html(  # noqa: C901, PLR0912, PLR0915
+    def _generate_jupyter_dataframe_html(  # noqa: C901, PLR0912, PLR0915
         self: CytoDataFrame_type,
     ) -> str:
         """
@@ -1062,7 +1078,6 @@ class CytoDataFrame(pd.DataFrame):
 
         # if we're in a notebook process as though in a jupyter environment
         if get_option("display.notebook_repr_html"):
-
             # Show widget only once per instance per notebook session
             if not self._custom_attrs["_widget_state"]["shown"]:
                 display(self._custom_attrs["_scale_slider"])
@@ -1286,14 +1301,18 @@ class CytoDataFrame(pd.DataFrame):
         else:
             return None
 
-    def _render_output(self: CytoDataFrame_type) -> str:  # noqa: C901, PLR0912, PLR0915
-
+    def _render_output(self: CytoDataFrame_type) -> str:
         # Return a hidden div that nbconvert will keep but Jupyter will ignore
-        html_content = self._generate_jupyter_html()
+        html_content = self._generate_jupyter_dataframe_html()
 
-        with self._custom_attrs["_output"] as output:
+        with self._custom_attrs["_output"]:
             display(HTML(html_content))
 
+        # We duplicate the display so that the jupyter notebook
+        # retains printable output (which appears in static exports
+        # such as PDFs or GitHub webpages). Ipywidget output
+        # rendering is not retained in these formats, so we must
+        # add this in order to retain visibility of the data.
         display(
             HTML(
                 f"""
@@ -1314,22 +1333,20 @@ class CytoDataFrame(pd.DataFrame):
 
                 </style>
                 <div class="print-view">
-                        {html_content}    
+                        {html_content}
                 </div>
                 """
             )
         )
 
-    def _repr_html_(  # noqa: C901, PLR0912, PLR0915
-        self: CytoDataFrame_type,
-    ) -> str:
+    def _repr_html_(self: CytoDataFrame_type, debug: bool = False) -> str:
         """
         Returns HTML representation of the underlying pandas DataFrame
         for use within Juypyter notebook environments and similar.
 
         We modify this to be a delivery mechanism for ipywidgets
         in order to dynamically adjust the dataframe display
-        withing Jupyter environments.
+        within Jupyter environments.
 
         Mainly for Jupyter notebooks.
 
@@ -1338,18 +1355,19 @@ class CytoDataFrame(pd.DataFrame):
         """
 
         # if we're in a notebook process as though in a jupyter environment
-        if get_option("display.notebook_repr_html"):
-
+        if get_option("display.notebook_repr_html") and not debug:
             # Show a vbox with the widgets if we haven't already.
             # This is used to initialize the display.
             if not self._custom_attrs["_widget_state"]["shown"]:
                 display(
-                    (widgets.VBox(
-                        [
-                            self._custom_attrs["_scale_slider"],
-                            self._custom_attrs["_output"],
-                        ]
-                    ))
+                    (
+                        widgets.VBox(
+                            [
+                                self._custom_attrs["_scale_slider"],
+                                self._custom_attrs["_output"],
+                            ]
+                        )
+                    )
                 )
                 self._custom_attrs["_widget_state"]["shown"] = True
 
@@ -1362,16 +1380,37 @@ class CytoDataFrame(pd.DataFrame):
                 self._on_slider_change, names="value"
             )
 
+        # allow for debug mode to be set which returns the HTML
+        # without widgets.
+
+        elif debug:
+            return self._generate_jupyter_dataframe_html()
+
         else:
             return None
 
-    def __repr__(self):
+    def __repr__(self: CytoDataFrame_type, debug: bool = False) -> str:
+        """
+        Return the string representation of the CytoDataFrame.
 
-        # avoid displaying the string representation if we're in a notebook
-        # note: we do this to avoid conflicts with how ipywidgets renders
-        # the dataframe while we're using an interactive gui.
-        if get_option("display.notebook_repr_html"):
+        In notebook environments, this method suppresses the default string
+        representation to prevent interference with the interactive `_repr_html_`
+        output (e.g., ipywidgets-based GUI). When `debug` is set to True, the
+        standard string representation is returned even in notebook contexts.
+
+        Args:
+            debug (bool, optional):
+                If True, always return the standard representation regardless
+                of notebook environment. Defaults to False.
+
+        Returns:
+            str:
+                The string representation of the DataFrame (or an empty string
+                in notebook view mode when debug is False).
+        """
+        if get_option("display.notebook_repr_html") and not debug:
             return ""
+
         return super().__repr__()
 
     def _enbable_debug_mode(self: CytoDataFrame_type) -> None:

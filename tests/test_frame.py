@@ -5,6 +5,7 @@ Tests cosmicqc CytoDataFrame module
 import pathlib
 
 import pandas as pd
+from _pytest.monkeypatch import MonkeyPatch
 from pyarrow import parquet
 
 from cytodataframe.frame import CytoDataFrame
@@ -371,7 +372,7 @@ def test_cytodataframe_dynamic_width_and_height(
     # gather the html of the output for the dataframe
     cdf_image_html = cdf[
         ["Image_FileName_DAPI", "Image_FileName_GFP", "Image_FileName_RFP"]
-    ][1:2]._repr_html_()
+    ][1:2]._repr_html_(debug=True)
 
     # test that the html string contains the customized width and height
     # constraints on the 3 images which display within the html output.
@@ -383,7 +384,38 @@ def test_cytodataframe_dynamic_width_and_height(
     # in the process).
     cdf_image_html = cdf[
         ["Image_FileName_DAPI", "Image_FileName_GFP", "Image_FileName_RFP"]
-    ][1:2].T._repr_html_()
+    ][1:2].T._repr_html_(debug=True)
 
     assert cdf_image_html.count("width:100px") == 3
     assert cdf_image_html.count("height:auto") == 3
+
+
+def test_slider_updates_state(monkeypatch: MonkeyPatch):
+    """
+    Test that the slider for image adjustments updates the internal
+    widget state and triggers the render method.
+    """
+
+    # Minimal dummy dataframe
+    df = pd.DataFrame({"Image_FileName_DNA": ["example.tif"]})
+    cdf = CytoDataFrame(df)
+
+    # Simulate the change dictionary sent by ipywidgets
+    change = {"new": 75}
+
+    # Track render calls using monkeypatch or a flag
+    render_called = {}
+
+    def mock_render_output() -> None:
+        render_called["called"] = True
+
+    monkeypatch.setattr(cdf, "_render_output", mock_render_output)
+
+    # Call the method manually
+    cdf._on_slider_change(change)
+
+    # Check if internal widget state updated
+    assert cdf._custom_attrs["_widget_state"]["scale"] == 75
+
+    # Check if the render method was triggered
+    assert render_called.get("called", False)
