@@ -38,6 +38,9 @@ from .image import (
     draw_outline_on_image_from_mask,
     draw_outline_on_image_from_outline,
 )
+import ipywidgets as widgets
+from IPython.display import clear_output, display, HTML
+
 
 logger = logging.getLogger(__name__)
 
@@ -154,7 +157,23 @@ class CytoDataFrame(pd.DataFrame):
                 display_options if display_options is not None else None
             ),
             "is_transposed": False,
+            # add widget control meta
+            "_widget_state": {"scale": 1.0, "shown": False},
+            "_scale_slider": widgets.FloatSlider(
+                value=50,
+                min=0,
+                max=100,
+                step=1,
+                description="Image equalization:",
+                continuous_update=False,
+            ),
+            "_output": widgets.Output(),
         }
+
+        # set an observer for the slider
+        self._custom_attrs["_scale_slider"].observe(
+            self._on_slider_change, names="value"
+        )
 
         if isinstance(data, CytoDataFrame):
             self._custom_attrs["data_source"] = data._custom_attrs["data_source"]
@@ -208,9 +227,7 @@ class CytoDataFrame(pd.DataFrame):
         self._custom_attrs["compartment_center_xy"] = (
             self.get_compartment_center_xy_from_data()
             if compartment_center_xy is None or compartment_center_xy is True
-            else compartment_center_xy
-            if compartment_center_xy is not False
-            else None
+            else compartment_center_xy if compartment_center_xy is not False else None
         )
 
         self._custom_attrs["data_image_paths"] = (
@@ -223,7 +240,9 @@ class CytoDataFrame(pd.DataFrame):
         # instead of Pandas DataFrames.
         self._wrap_methods()
 
-    def __getitem__(self: CytoDataFrame_type, key: Union[int, str]) -> Any:  # noqa: ANN401
+    def __getitem__(
+        self: CytoDataFrame_type, key: Union[int, str]
+    ) -> Any:  # noqa: ANN401
         """
         Returns an element or a slice of the underlying pandas DataFrame.
 
@@ -242,7 +261,7 @@ class CytoDataFrame(pd.DataFrame):
             return result
 
         elif isinstance(result, pd.DataFrame):
-            return CytoDataFrame(
+            cdf =  CytoDataFrame(
                 super().__getitem__(key),
                 data_context_dir=self._custom_attrs["data_context_dir"],
                 data_image_paths=self._custom_attrs["data_image_paths"],
@@ -254,6 +273,13 @@ class CytoDataFrame(pd.DataFrame):
                 image_adjustment=self._custom_attrs["image_adjustment"],
                 display_options=self._custom_attrs["display_options"],
             )
+
+            # add widget control meta
+            cdf._custom_attrs["_widget_state"] = self._custom_attrs["_widget_state"]
+            cdf._custom_attrs["_scale_slider"] = self._custom_attrs["_scale_slider"]
+            cdf._custom_attrs["_output"] = self._custom_attrs["_output"]
+
+            return cdf
 
     def _return_cytodataframe(
         self: CytoDataFrame_type,
@@ -285,8 +311,9 @@ class CytoDataFrame(pd.DataFrame):
         """
 
         result = method(*args, **kwargs)
+
         if isinstance(result, pd.DataFrame):
-            result = CytoDataFrame(
+            cdf = CytoDataFrame(
                 data=result,
                 data_context_dir=self._custom_attrs["data_context_dir"],
                 data_image_paths=self._custom_attrs["data_image_paths"],
@@ -301,8 +328,14 @@ class CytoDataFrame(pd.DataFrame):
             # If the method name is transpose we know that
             # the dataframe has been transposed.
             if method_name == "transpose" and not self._custom_attrs["is_transposed"]:
-                result._custom_attrs["is_transposed"] = True
-        return result
+                cdf._custom_attrs["is_transposed"] = True
+
+            # add widget control meta
+            cdf._custom_attrs["_widget_state"] = self._custom_attrs["_widget_state"]
+            cdf._custom_attrs["_scale_slider"] = self._custom_attrs["_scale_slider"]
+            cdf._custom_attrs["_output"] = self._custom_attrs["_output"]
+
+        return cdf
 
     def _wrap_method(self: CytoDataFrame_type, method_name: str) -> Callable:
         """
@@ -324,7 +357,9 @@ class CytoDataFrame(pd.DataFrame):
                 the result is a CytoDataFrame.
         """
 
-        def wrapper(*args: Tuple[Any, ...], **kwargs: Dict[str, Any]) -> Any:  # noqa: ANN401
+        def wrapper(
+            *args: Tuple[Any, ...], **kwargs: Dict[str, Any]
+        ) -> Any:  # noqa: ANN401
             """
             Wraps the specified method to ensure
             it returns a CytoDataFrame.
@@ -379,6 +414,14 @@ class CytoDataFrame(pd.DataFrame):
         # set the wrapped method for the class instance
         for method_name in methods_to_wrap:
             setattr(self, method_name, self._wrap_method(method_name=method_name))
+
+    def _on_slider_change(self, change):
+        
+        self._custom_attrs["_widget_state"]["scale"] = change["new"]
+        self._custom_attrs["_output"].clear_output(wait=True)
+        # Redraw dataframe
+        with self._custom_attrs["_output"]:
+            display(HTML(self._generate_jupyter_html()))
 
     def get_bounding_box_from_data(
         self: CytoDataFrame_type,
@@ -843,11 +886,12 @@ class CytoDataFrame(pd.DataFrame):
         # or adaptive histogram equalization
         if self._custom_attrs["image_adjustment"] is not None:
             logger.debug("Adjusting image with custom image adjustment function.")
-            orig_image_array = self._custom_attrs["image_adjustment"](orig_image_array)
+            orig_image_array = self._custom_attrs["image_adjustment"](orig_image_array, self._custom_attrs["_widget_state"]["scale"])
         else:
             logger.debug("Adjusting image with adaptive histogram equalization.")
             orig_image_array = adjust_with_adaptive_histogram_equalization(
-                orig_image_array
+                image=orig_image_array,
+                brightness=self._custom_attrs["_widget_state"]["scale"]
             )
 
         # Normalize to 0-255 for image saving
@@ -988,173 +1032,145 @@ class CytoDataFrame(pd.DataFrame):
             logger.debug("Detected display rows: %s", start_display + end_display)
             return start_display + end_display
 
-    def _repr_html_(  # noqa: C901, PLR0912, PLR0915
+    def _generate_jupyter_html(  # noqa: C901, PLR0912, PLR0915
         self: CytoDataFrame_type, key: Optional[Union[int, str]] = None
     ) -> str:
-        """
-        Returns HTML representation of the underlying pandas DataFrame
-        for use within Juypyter notebook environments and similar.
+            """
+            Returns HTML representation of the underlying pandas DataFrame
+            for use within Juypyter notebook environments and similar.
 
-        Referenced with modifications from:
-        https://github.com/pandas-dev/pandas/blob/v2.2.2/pandas/core/frame.py#L1216
+            Referenced with modifications from:
+            https://github.com/pandas-dev/pandas/blob/v2.2.2/pandas/core/frame.py#L1216
 
-        Modifications added to help achieve image-based output for single-cell data
-        within the context of CytoDataFrame and coSMicQC.
+            Modifications added to help achieve image-based output for single-cell data
+            within the context of CytoDataFrame and coSMicQC.
 
-        Mainly for Jupyter notebooks.
+            Mainly for Jupyter notebooks.
 
-        Returns:
-            str: The data in a pandas DataFrame.
-        """
+            Returns:
+                str: The data in a pandas DataFrame.
+            """
 
-        # handles DataFrame.info representations
-        if self._info_repr():
-            buf = StringIO()
-            self.info(buf=buf)
-            # need to escape the <class>, should be the first line.
-            val = buf.getvalue().replace("<", r"&lt;", 1)
-            val = val.replace(">", r"&gt;", 1)
-            return f"<pre>{val}</pre>"
+            # handles DataFrame.info representations
+            if self._info_repr():
+                buf = StringIO()
+                self.info(buf=buf)
+                # need to escape the <class>, should be the first line.
+                val = buf.getvalue().replace("<", r"&lt;", 1)
+                val = val.replace(">", r"&gt;", 1)
+                return f"<pre>{val}</pre>"
 
-        if get_option("display.notebook_repr_html"):
-            max_rows = get_option("display.max_rows")
-            min_rows = get_option("display.min_rows")
-            max_cols = get_option("display.max_columns")
-            show_dimensions = get_option("display.show_dimensions")
+            # if we're in a notebook process as though in a jupyter environment
+            if get_option("display.notebook_repr_html"):
 
-            if self._custom_attrs["is_transposed"]:
-                # if the data are transposed,
-                # we transpose them back to keep
-                # logic the same here.
-                data = self.transpose()
+                # Show widget only once per instance per notebook session
+                if not self._custom_attrs["_widget_state"]["shown"]:
+                    display(self._custom_attrs["_scale_slider"])
+                    self._custom_attrs["_widget_state"]["shown"] = True
 
-            # Re-add bounding box columns if they are no longer available
-            bounding_box_externally_joined = False
-            if self._custom_attrs["data_bounding_box"] is not None and not all(
-                col in self.columns.tolist()
-                for col in self._custom_attrs["data_bounding_box"].columns.tolist()
-            ):
-                logger.debug("Re-adding bounding box columns.")
-                data = (
-                    self.join(other=self._custom_attrs["data_bounding_box"])
-                    if not self._custom_attrs["is_transposed"]
-                    else data.join(other=self._custom_attrs["data_bounding_box"])
-                )
-                bounding_box_externally_joined = True
-            else:
-                data = self.copy() if not bounding_box_externally_joined else data
+                max_rows = get_option("display.max_rows")
+                min_rows = get_option("display.min_rows")
+                max_cols = get_option("display.max_columns")
+                show_dimensions = get_option("display.show_dimensions")
 
-            # Re-add compartment center xy columns if they are no longer available
-            compartment_center_externally_joined = False
-            if self._custom_attrs["compartment_center_xy"] is not None and not all(
-                col
-                in (data if bounding_box_externally_joined else self).columns.tolist()
-                for col in self._custom_attrs["compartment_center_xy"].columns.tolist()
-            ):
-                logger.debug("Re-adding compartment center xy columns.")
-                data = (
-                    data.join(other=self._custom_attrs["compartment_center_xy"])
-                    if bounding_box_externally_joined
-                    else self.join(other=self._custom_attrs["compartment_center_xy"])
-                )
-                compartment_center_externally_joined = True
-            else:
-                data = (
-                    data
-                    if bounding_box_externally_joined
-                    or compartment_center_externally_joined
-                    else self.copy()
-                )
+                if self._custom_attrs["is_transposed"]:
+                    # if the data are transposed,
+                    # we transpose them back to keep
+                    # logic the same here.
+                    data = self.transpose()
 
-            # Re-add image path columns if they are no longer available
-            image_paths_externally_joined = False
-            if self._custom_attrs["data_image_paths"] is not None and not all(
-                col
-                in (
-                    data if compartment_center_externally_joined else self
-                ).columns.tolist()
-                for col in self._custom_attrs["data_image_paths"].columns.tolist()
-            ):
-                logger.debug("Re-adding image path columns.")
-                logger.debug(
-                    "bounding_box: %s",
-                    compartment_center_externally_joined
-                    or bounding_box_externally_joined,
-                )
-                data = (
-                    data.join(other=self._custom_attrs["data_image_paths"])
-                    if compartment_center_externally_joined
-                    or bounding_box_externally_joined
-                    else self.join(other=self._custom_attrs["data_image_paths"])
-                )
-                image_paths_externally_joined = True
-            else:
-                data = (
-                    data
-                    if image_paths_externally_joined or bounding_box_externally_joined
-                    else self.copy()
-                )
+                # Re-add bounding box columns if they are no longer available
+                bounding_box_externally_joined = False
+                if self._custom_attrs["data_bounding_box"] is not None and not all(
+                    col in self.columns.tolist()
+                    for col in self._custom_attrs["data_bounding_box"].columns.tolist()
+                ):
+                    logger.debug("Re-adding bounding box columns.")
+                    data = (
+                        self.join(other=self._custom_attrs["data_bounding_box"])
+                        if not self._custom_attrs["is_transposed"]
+                        else data.join(other=self._custom_attrs["data_bounding_box"])
+                    )
+                    bounding_box_externally_joined = True
+                else:
+                    data = self.copy() if not bounding_box_externally_joined else data
 
-                # determine if we have image_cols to display
-            if image_cols := CytoDataFrame(data).find_image_columns():
-                # attempt to find the image path columns
-                image_path_cols = CytoDataFrame(data).find_image_path_columns(
-                    image_cols=image_cols, all_cols=data.columns
-                )
-            logger.debug("Image columns found: %s", image_cols)
+                # Re-add compartment center xy columns if they are no longer available
+                compartment_center_externally_joined = False
+                if self._custom_attrs["compartment_center_xy"] is not None and not all(
+                    col
+                    in (data if bounding_box_externally_joined else self).columns.tolist()
+                    for col in self._custom_attrs["compartment_center_xy"].columns.tolist()
+                ):
+                    logger.debug("Re-adding compartment center xy columns.")
+                    data = (
+                        data.join(other=self._custom_attrs["compartment_center_xy"])
+                        if bounding_box_externally_joined
+                        else self.join(other=self._custom_attrs["compartment_center_xy"])
+                    )
+                    compartment_center_externally_joined = True
+                else:
+                    data = (
+                        data
+                        if bounding_box_externally_joined
+                        or compartment_center_externally_joined
+                        else self.copy()
+                    )
 
-            # gather indices which will be displayed based on pandas configuration
-            display_indices = CytoDataFrame(data).get_displayed_rows()
+                # Re-add image path columns if they are no longer available
+                image_paths_externally_joined = False
+                if self._custom_attrs["data_image_paths"] is not None and not all(
+                    col
+                    in (
+                        data if compartment_center_externally_joined else self
+                    ).columns.tolist()
+                    for col in self._custom_attrs["data_image_paths"].columns.tolist()
+                ):
+                    logger.debug("Re-adding image path columns.")
+                    logger.debug(
+                        "bounding_box: %s",
+                        compartment_center_externally_joined
+                        or bounding_box_externally_joined,
+                    )
+                    data = (
+                        data.join(other=self._custom_attrs["data_image_paths"])
+                        if compartment_center_externally_joined
+                        or bounding_box_externally_joined
+                        else self.join(other=self._custom_attrs["data_image_paths"])
+                    )
+                    image_paths_externally_joined = True
+                else:
+                    data = (
+                        data
+                        if image_paths_externally_joined or bounding_box_externally_joined
+                        else self.copy()
+                    )
 
-            # gather bounding box columns for use below
-            bounding_box_cols = self._custom_attrs["data_bounding_box"].columns.tolist()
+                    # determine if we have image_cols to display
+                if image_cols := CytoDataFrame(data).find_image_columns():
+                    # attempt to find the image path columns
+                    image_path_cols = CytoDataFrame(data).find_image_path_columns(
+                        image_cols=image_cols, all_cols=data.columns
+                    )
+                logger.debug("Image columns found: %s", image_cols)
 
-            # gather compartment_xy columns for use below
-            if self._custom_attrs["compartment_center_xy"] is not None:
-                compartment_center_xy_cols = self._custom_attrs[
-                    "compartment_center_xy"
-                ].columns.tolist()
+                # gather indices which will be displayed based on pandas configuration
+                display_indices = CytoDataFrame(data).get_displayed_rows()
 
-            for image_col in image_cols:
-                data.loc[display_indices, image_col] = data.loc[display_indices].apply(
-                    lambda row: self.process_image_data_as_html_display(
-                        data_value=row[image_col],
-                        bounding_box=(
-                            # rows below are specified using the column name to
-                            # determine which part of the bounding box the columns
-                            # relate to (the list of column names could be in
-                            # various order).
-                            row[
-                                next(
-                                    col
-                                    for col in bounding_box_cols
-                                    if "Minimum_X" in col
-                                )
-                            ],
-                            row[
-                                next(
-                                    col
-                                    for col in bounding_box_cols
-                                    if "Minimum_Y" in col
-                                )
-                            ],
-                            row[
-                                next(
-                                    col
-                                    for col in bounding_box_cols
-                                    if "Maximum_X" in col
-                                )
-                            ],
-                            row[
-                                next(
-                                    col
-                                    for col in bounding_box_cols
-                                    if "Maximum_Y" in col
-                                )
-                            ],
-                        ),
-                        compartment_center_xy=(
-                            (
+                # gather bounding box columns for use below
+                bounding_box_cols = self._custom_attrs["data_bounding_box"].columns.tolist()
+
+                # gather compartment_xy columns for use below
+                if self._custom_attrs["compartment_center_xy"] is not None:
+                    compartment_center_xy_cols = self._custom_attrs[
+                        "compartment_center_xy"
+                    ].columns.tolist()
+
+                for image_col in image_cols:
+                    data.loc[display_indices, image_col] = data.loc[display_indices].apply(
+                        lambda row: self.process_image_data_as_html_display(
+                            data_value=row[image_col],
+                            bounding_box=(
                                 # rows below are specified using the column name to
                                 # determine which part of the bounding box the columns
                                 # relate to (the list of column names could be in
@@ -1162,75 +1178,165 @@ class CytoDataFrame(pd.DataFrame):
                                 row[
                                     next(
                                         col
-                                        for col in compartment_center_xy_cols
-                                        if "X" in col
+                                        for col in bounding_box_cols
+                                        if "Minimum_X" in col
                                     )
                                 ],
                                 row[
                                     next(
                                         col
-                                        for col in compartment_center_xy_cols
-                                        if "Y" in col
+                                        for col in bounding_box_cols
+                                        if "Minimum_Y" in col
                                     )
                                 ],
-                            )
-                            if self._custom_attrs["compartment_center_xy"] is not None
-                            else None
+                                row[
+                                    next(
+                                        col
+                                        for col in bounding_box_cols
+                                        if "Maximum_X" in col
+                                    )
+                                ],
+                                row[
+                                    next(
+                                        col
+                                        for col in bounding_box_cols
+                                        if "Maximum_Y" in col
+                                    )
+                                ],
+                            ),
+                            compartment_center_xy=(
+                                (
+                                    # rows below are specified using the column name to
+                                    # determine which part of the bounding box the columns
+                                    # relate to (the list of column names could be in
+                                    # various order).
+                                    row[
+                                        next(
+                                            col
+                                            for col in compartment_center_xy_cols
+                                            if "X" in col
+                                        )
+                                    ],
+                                    row[
+                                        next(
+                                            col
+                                            for col in compartment_center_xy_cols
+                                            if "Y" in col
+                                        )
+                                    ],
+                                )
+                                if self._custom_attrs["compartment_center_xy"] is not None
+                                else None
+                            ),
+                            # set the image path based on the image_path cols.
+                            image_path=(
+                                row[image_path_cols[image_col]]
+                                if image_path_cols is not None and image_path_cols != {}
+                                else None
+                            ),
                         ),
-                        # set the image path based on the image_path cols.
-                        image_path=(
-                            row[image_path_cols[image_col]]
-                            if image_path_cols is not None and image_path_cols != {}
-                            else None
-                        ),
-                    ),
-                    axis=1,
+                        axis=1,
+                    )
+
+                if bounding_box_externally_joined:
+                    data = data.drop(
+                        self._custom_attrs["data_bounding_box"].columns.tolist(), axis=1
+                    )
+
+                if compartment_center_externally_joined:
+                    data = data.drop(
+                        self._custom_attrs["compartment_center_xy"].columns.tolist(), axis=1
+                    )
+
+                if image_paths_externally_joined:
+                    data = data.drop(
+                        self._custom_attrs["data_image_paths"].columns.tolist(), axis=1
+                    )
+
+                if self._custom_attrs["is_transposed"]:
+                    # retranspose to return the
+                    # data in the shape expected
+                    # by the user.
+                    data = data.transpose()
+
+                formatter = fmt.DataFrameFormatter(
+                    data,
+                    columns=None,
+                    col_space=None,
+                    na_rep="NaN",
+                    formatters=None,
+                    float_format=None,
+                    sparsify=None,
+                    justify=None,
+                    index_names=True,
+                    header=True,
+                    index=True,
+                    bold_rows=True,
+                    # note: we avoid escapes to allow HTML rendering for images
+                    escape=False,
+                    max_rows=max_rows,
+                    min_rows=min_rows,
+                    max_cols=max_cols,
+                    show_dimensions=show_dimensions,
+                    decimal=".",
                 )
 
-            if bounding_box_externally_joined:
-                data = data.drop(
-                    self._custom_attrs["data_bounding_box"].columns.tolist(), axis=1
-                )
+                return fmt.DataFrameRenderer(formatter).to_html()
 
-            if compartment_center_externally_joined:
-                data = data.drop(
-                    self._custom_attrs["compartment_center_xy"].columns.tolist(), axis=1
-                )
+            else:
+                return None
 
-            if image_paths_externally_joined:
-                data = data.drop(
-                    self._custom_attrs["data_image_paths"].columns.tolist(), axis=1
-                )
+    def _repr_html_(  # noqa: C901, PLR0912, PLR0915
+        self: CytoDataFrame_type, key: Optional[Union[int, str]] = None
+    ) -> str:
+        """
+        Returns HTML representation of the underlying pandas DataFrame
+        for use within Juypyter notebook environments and similar.
 
-            if self._custom_attrs["is_transposed"]:
-                # retranspose to return the
-                # data in the shape expected
-                # by the user.
-                data = data.transpose()
+        We modify this to be a delivery mechanism for ipywidgets
+        in order to dynamically adjust the dataframe display
+        withing Jupyter environments.
 
-            formatter = fmt.DataFrameFormatter(
-                data,
-                columns=None,
-                col_space=None,
-                na_rep="NaN",
-                formatters=None,
-                float_format=None,
-                sparsify=None,
-                justify=None,
-                index_names=True,
-                header=True,
-                index=True,
-                bold_rows=True,
-                # note: we avoid escapes to allow HTML rendering for images
-                escape=False,
-                max_rows=max_rows,
-                min_rows=min_rows,
-                max_cols=max_cols,
-                show_dimensions=show_dimensions,
-                decimal=".",
-            )
+        Mainly for Jupyter notebooks.
 
-            return fmt.DataFrameRenderer(formatter).to_html()
+        Returns:
+            str: The data in a pandas DataFrame.
+        """
+
+        # if we're in a notebook process as though in a jupyter environment
+        if get_option("display.notebook_repr_html"):
+
+            # Show a vbox with the widgets if we haven't already.
+            # This is used to initialize the display.
+            if not self._custom_attrs["_widget_state"]["shown"]:
+                display(widgets.VBox([self._custom_attrs["_scale_slider"], self._custom_attrs["_output"]]))
+                self._custom_attrs["_widget_state"]["shown"] = True
+            
+            # render the first HTML output for display
+            with self._custom_attrs["_output"]:
+                display(HTML(self._generate_jupyter_html()))
 
         else:
             return None
+
+    def __repr__(self):
+        if get_option("display.notebook_repr_html"):
+            return ""
+        return super().__repr__()
+    
+    def _enbable_debug_mode(self: CytoDataFrame_type) -> None:
+        """
+        Enable debug mode for the CytoDataFrame instance.
+        This method sets the logger level to DEBUG and
+        enables debug mode for the instance.
+        """
+        logger.setLevel(logging.DEBUG)
+        import sys
+
+        # Only add a handler if none exist (to avoid duplicates)
+        if not logger.handlers:
+            handler = logging.StreamHandler(sys.stdout)
+            handler.setLevel(logging.DEBUG)  # This is critical
+            formatter = logging.Formatter("%(levelname)s: %(message)s")
+            handler.setFormatter(formatter)
+            logger.addHandler(handler)

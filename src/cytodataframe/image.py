@@ -196,72 +196,69 @@ def draw_outline_on_image_from_mask(
     return combined_image
 
 
-def adjust_with_adaptive_histogram_equalization(image: np.ndarray) -> np.ndarray:
+def adjust_with_adaptive_histogram_equalization(
+    image: np.ndarray,
+    brightness: int = 50
+) -> np.ndarray:
     """
-    Adaptive histogram equalization with additional smoothing to reduce graininess.
+    Adaptive histogram equalization with tunable 
+    enhancement strength.
 
     Parameters:
         image (np.ndarray):
             The input image to be processed.
+        brightness (int):
+            Value from 0 (very dark, low enhancement) 
+            to 100 (very bright, high enhancement).
+            Affects kernel size, clip limit, 
+            and histogram bins.
 
     Returns:
         np.ndarray:
-            The processed image with enhanced contrast.
+            The processed image with contrast enhanced.
     """
-    # Adjust parameters dynamically
+    # Normalize brightness to 0–1 range
+    b = np.clip(brightness, 0, 100) / 100.0
+
+    # Adjust internal parameters based on brightness
+    # Smaller kernel_size → more local contrast enhancement at high brightness
+    min_kernel_frac, max_kernel_frac = 1 / 4, 1 / 12
+    kernel_frac = min_kernel_frac * (1 - b) + max_kernel_frac * b
     kernel_size = (
-        max(image.shape[0] // 10, 1),  # Ensure the kernel size is at least 1
-        max(image.shape[1] // 10, 1),  # Ensure the kernel size is at least 1
+        max(int(image.shape[0] * kernel_frac), 1),
+        max(int(image.shape[1] * kernel_frac), 1)
     )
-    clip_limit = 0.02  # Lower clip limit to suppress over-enhancement
-    nbins = 512  # Increase bins for finer histogram granularity
 
-    # Check if the image has an alpha channel (RGBA)
-    # RGBA image
-    if image.shape[-1] == 4:  # noqa: PLR2004
-        rgb_np = image[:, :, :3]
-        alpha_np = image[:, :, 3]
+    # Higher brightness → lower clip_limit → stronger contrast stretching
+    min_clip = 0.01
+    max_clip = 0.1
+    clip_limit = max_clip * (1 - b) + min_clip * b
 
-        equalized_rgb_np = np.zeros_like(rgb_np, dtype=np.float32)
+    # nbins: more bins → finer histogram resolution
+    min_bins, max_bins = 128, 1024
+    nbins = int(min_bins * (1 - b) + max_bins * b)
 
-        for channel in range(3):
-            equalized_rgb_np[:, :, channel] = exposure.equalize_adapthist(
-                rgb_np[:, :, channel],
-                kernel_size=kernel_size,
-                clip_limit=clip_limit,
-                nbins=nbins,
-            )
-
-        equalized_rgb_np = img_as_ubyte(equalized_rgb_np)
-        final_image_np = np.dstack([equalized_rgb_np, alpha_np])
-
-    # Grayscale image
-    elif len(image.shape) == 2:  # noqa: PLR2004
-        final_image_np = exposure.equalize_adapthist(
-            image,
+    def equalize(channel):
+        return exposure.equalize_adapthist(
+            channel,
             kernel_size=kernel_size,
             clip_limit=clip_limit,
             nbins=nbins,
         )
-        final_image_np = img_as_ubyte(final_image_np)
 
-    # RGB image
-    elif image.shape[-1] == 3:  # noqa: PLR2004
-        equalized_rgb_np = np.zeros_like(image, dtype=np.float32)
+    if image.ndim == 2:
+        result = equalize(image)
+        return img_as_ubyte(result)
 
-        for channel in range(3):
-            equalized_rgb_np[:, :, channel] = exposure.equalize_adapthist(
-                image[:, :, channel],
-                kernel_size=kernel_size,
-                clip_limit=clip_limit,
-                nbins=nbins,
-            )
+    elif image.ndim == 3 and image.shape[2] == 3:
+        result = np.stack([equalize(image[:, :, i]) for i in range(3)], axis=-1)
+        return img_as_ubyte(result)
 
-        final_image_np = img_as_ubyte(equalized_rgb_np)
+    elif image.ndim == 3 and image.shape[2] == 4:
+        rgb = image[:, :, :3]
+        alpha = image[:, :, 3]
+        result = np.stack([equalize(rgb[:, :, i]) for i in range(3)], axis=-1)
+        return np.dstack([img_as_ubyte(result), alpha])
 
     else:
-        raise ValueError(
-            "Unsupported image format. Ensure the image is grayscale, RGB, or RGBA."
-        )
-
-    return final_image_np
+        raise ValueError("Unsupported image format. Use grayscale, RGB, or RGBA.")
