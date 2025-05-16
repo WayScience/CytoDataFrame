@@ -158,7 +158,7 @@ class CytoDataFrame(pd.DataFrame):
             ),
             "is_transposed": False,
             # add widget control meta
-            "_widget_state": {"scale": 1.0, "shown": False},
+            "_widget_state": {"scale": 50.0, "shown": False},
             "_scale_slider": widgets.FloatSlider(
                 value=50,
                 min=0,
