@@ -12,6 +12,7 @@ from skimage import draw, exposure
 from skimage.util import img_as_ubyte
 
 
+
 def is_image_too_dark(
     image: Image.Image, pixel_brightness_threshold: float = 10.0
 ) -> bool:
@@ -196,68 +197,56 @@ def draw_outline_on_image_from_mask(
     return combined_image
 
 
+
 def adjust_with_adaptive_histogram_equalization(
     image: np.ndarray,
     brightness: int = 50
 ) -> np.ndarray:
     """
-    Adaptive histogram equalization with tunable 
-    enhancement strength.
+    Adaptive histogram equalization with brightness and contrast tuning via gamma.
 
     Parameters:
-        image (np.ndarray):
-            The input image to be processed.
-        brightness (int):
-            Value from 0 (very dark, low enhancement) 
-            to 100 (very bright, high enhancement).
-            Affects kernel size, clip limit, 
-            and histogram bins.
+        image (np.ndarray): Input image.
+        brightness (int): 0 = dark, 50 = neutral, 100 = bright.
 
     Returns:
-        np.ndarray:
-            The processed image with contrast enhanced.
+        np.ndarray: Adjusted image.
     """
-    # Normalize brightness to 0–1 range
     b = np.clip(brightness, 0, 100) / 100.0
 
-    # Adjust internal parameters based on brightness
-    # Smaller kernel_size → more local contrast enhancement at high brightness
-    min_kernel_frac, max_kernel_frac = 1 / 4, 1 / 12
-    kernel_frac = min_kernel_frac * (1 - b) + max_kernel_frac * b
+    # Contrast settings (same as before)
+    kernel_frac = (1/4) * (1 - b) + (1/12) * b
     kernel_size = (
         max(int(image.shape[0] * kernel_frac), 1),
         max(int(image.shape[1] * kernel_frac), 1)
     )
 
-    # Higher brightness → lower clip_limit → stronger contrast stretching
-    min_clip = 0.01
-    max_clip = 0.1
-    clip_limit = max_clip * (1 - b) + min_clip * b
+    clip_limit = 0.1 * (1 - b) + 0.01 * b
+    nbins = int(128 * (1 - b) + 1024 * b)
 
-    # nbins: more bins → finer histogram resolution
-    min_bins, max_bins = 128, 1024
-    nbins = int(min_bins * (1 - b) + max_bins * b)
-
-    def equalize(channel):
-        return exposure.equalize_adapthist(
+    def equalize_and_adjust(channel):
+        eq = exposure.equalize_adapthist(
             channel,
             kernel_size=kernel_size,
             clip_limit=clip_limit,
             nbins=nbins,
         )
+        brightness_shift = (b - 0.5) * 2  # [-1, 1]
+        gamma = 1.0 - brightness_shift * 0.8  # e.g. 1.8 → dark, 0.2 → bright
+        return exposure.adjust_gamma(eq, gamma=gamma)
 
     if image.ndim == 2:
-        result = equalize(image)
+        result = equalize_and_adjust(image)
         return img_as_ubyte(result)
 
     elif image.ndim == 3 and image.shape[2] == 3:
-        result = np.stack([equalize(image[:, :, i]) for i in range(3)], axis=-1)
+        result = np.stack([equalize_and_adjust(image[:, :, i]) for i in range(3)], axis=-1)
         return img_as_ubyte(result)
 
     elif image.ndim == 3 and image.shape[2] == 4:
         rgb = image[:, :, :3]
         alpha = image[:, :, 3]
-        result = np.stack([equalize(rgb[:, :, i]) for i in range(3)], axis=-1)
+        result = np.stack([equalize_and_adjust(rgb[:, :, i]) for i in range(3)], axis=-1)
         return np.dstack([img_as_ubyte(result), alpha])
 
     else:

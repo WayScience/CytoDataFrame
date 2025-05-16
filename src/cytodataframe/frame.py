@@ -18,7 +18,7 @@ from typing import (
     TypeVar,
     Union,
 )
-
+import warnings
 import numpy as np
 import pandas as pd
 import skimage
@@ -169,11 +169,6 @@ class CytoDataFrame(pd.DataFrame):
             ),
             "_output": widgets.Output(),
         }
-
-        # set an observer for the slider
-        self._custom_attrs["_scale_slider"].observe(
-            self._on_slider_change, names="value"
-        )
 
         if isinstance(data, CytoDataFrame):
             self._custom_attrs["data_source"] = data._custom_attrs["data_source"]
@@ -972,9 +967,13 @@ class CytoDataFrame(pd.DataFrame):
         try:
             # Save cropped image to buffer
             png_bytes_io = BytesIO()
-            skimage.io.imsave(
-                png_bytes_io, cropped_img_array, plugin="imageio", extension=".png"
-            )
+            
+            # catch warnings about low contrast images and avoid displaying them
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", UserWarning)
+                skimage.io.imsave(
+                    png_bytes_io, cropped_img_array, plugin="imageio", extension=".png"
+                )
             png_bytes = png_bytes_io.getvalue()
 
         except (FileNotFoundError, ValueError) as exc:
@@ -1033,7 +1032,7 @@ class CytoDataFrame(pd.DataFrame):
             return start_display + end_display
 
     def _generate_jupyter_html(  # noqa: C901, PLR0912, PLR0915
-        self: CytoDataFrame_type, key: Optional[Union[int, str]] = None
+        self: CytoDataFrame_type
     ) -> str:
             """
             Returns HTML representation of the underlying pandas DataFrame
@@ -1287,7 +1286,7 @@ class CytoDataFrame(pd.DataFrame):
                 return None
 
     def _repr_html_(  # noqa: C901, PLR0912, PLR0915
-        self: CytoDataFrame_type, key: Optional[Union[int, str]] = None
+        self: CytoDataFrame_type,
     ) -> str:
         """
         Returns HTML representation of the underlying pandas DataFrame
@@ -1315,6 +1314,11 @@ class CytoDataFrame(pd.DataFrame):
             # render the first HTML output for display
             with self._custom_attrs["_output"]:
                 display(HTML(self._generate_jupyter_html()))
+
+            # set an observer for the slider
+            self._custom_attrs["_scale_slider"].observe(
+                self._on_slider_change, names="value"
+            )
 
         else:
             return None
