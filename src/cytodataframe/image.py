@@ -197,7 +197,6 @@ def draw_outline_on_image_from_mask(
     return combined_image
 
 
-
 def adjust_with_adaptive_histogram_equalization(
     image: np.ndarray,
     brightness: int = 50
