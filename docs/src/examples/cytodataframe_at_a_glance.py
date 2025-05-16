@@ -49,7 +49,9 @@ CytoDataFrame(
         "Image_FileName_OrigDNA",
         "Image_FileName_OrigRNA",
     ]
-][:3]
+][
+    :3
+]
 
 # %%time
 # view JUMP plate BR00117006 with images and overlaid outlines for segmentation
@@ -65,7 +67,9 @@ CytoDataFrame(
         "Image_FileName_OrigDNA",
         "Image_FileName_OrigRNA",
     ]
-][:3]
+][
+    :3
+]
 
 
 # %%time
@@ -83,7 +87,9 @@ CytoDataFrame(
         "Image_FileName_OrigDNA",
         "Image_FileName_OrigRNA",
     ]
-][:3]
+][
+    :3
+]
 
 # %%time
 # view JUMP plate BR00117006 with images, change the display height and width
@@ -101,7 +107,9 @@ CytoDataFrame(
         "Image_FileName_OrigDNA",
         "Image_FileName_OrigRNA",
     ]
-][:5].T
+][
+    :5
+].T
 
 # %%time
 # view NF1 Cell Painting data with images
@@ -116,7 +124,9 @@ CytoDataFrame(
         "Image_FileName_RFP",
         "Image_FileName_DAPI",
     ]
-][:3]
+][
+    :3
+]
 
 # %%time
 # view NF1 Cell Painting data with images and overlaid outlines from masks
@@ -132,7 +142,9 @@ CytoDataFrame(
         "Image_FileName_RFP",
         "Image_FileName_DAPI",
     ]
-][:3]
+][
+    :3
+]
 
 # +
 # %%time
@@ -160,7 +172,9 @@ CytoDataFrame(
         "Image_FileName_RFP",
         "Image_FileName_DAPI",
     ]
-][:3]
+][
+    :3
+]
 # -
 
 # %%time
@@ -177,7 +191,9 @@ CytoDataFrame(
         "Image_FileName_DAPI",
         "Image_FileName_GOLD",
     ]
-][:3]
+][
+    :3
+]
 
 # %%time
 # view ALSF pediatric cancer atlas plate BR00143976 with images
