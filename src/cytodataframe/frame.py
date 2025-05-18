@@ -1372,7 +1372,6 @@ class CytoDataFrame(pd.DataFrame):
                 self._custom_attrs["_widget_state"]["shown"] = True
 
                 # render the first HTML output for display
-
                 self._render_output()
 
             # set an observer for the slider
