@@ -440,20 +440,71 @@ context directory, and bounding box information.</p>
 </dl>
 </dd></dl>
 
-<dl class="py attribute">
-<dt class="sig sig-object py" id="id0">
-<span class="sig-name descname"><span class="pre">_metadata</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['_custom_attrs']</span></em><a class="headerlink" href="#id0" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="src.cytodataframe.frame.CytoDataFrame._enbable_debug_mode">
+<span class="sig-name descname"><span class="pre">_enbable_debug_mode</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/src/cytodataframe/frame.html#CytoDataFrame._enbable_debug_mode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.cytodataframe.frame.CytoDataFrame._enbable_debug_mode" title="Link to this definition">#</a></dt>
+<dd><p>Enable debug mode for the CytoDataFrame instance.
+This method sets the logger level to DEBUG and
+enables debug mode for the instance.</p>
+</dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="src.cytodataframe.frame.CytoDataFrame._repr_html_">
-<span class="sig-name descname"><span class="pre">_repr_html_</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/src/cytodataframe/frame.html#CytoDataFrame._repr_html_"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.cytodataframe.frame.CytoDataFrame._repr_html_" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="src.cytodataframe.frame.CytoDataFrame._generate_jupyter_dataframe_html">
+<span class="sig-name descname"><span class="pre">_generate_jupyter_dataframe_html</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/src/cytodataframe/frame.html#CytoDataFrame._generate_jupyter_dataframe_html"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.cytodataframe.frame.CytoDataFrame._generate_jupyter_dataframe_html" title="Link to this definition">#</a></dt>
 <dd><p>Returns HTML representation of the underlying pandas DataFrame
 for use within Juypyter notebook environments and similar.</p>
 <p>Referenced with modifications from:
 <a class="github reference external" href="https://github.com/pandas-dev/pandas/blob/v2.2.2/pandas/core/frame.py#L1216">pandas-dev/pandas</a></p>
 <p>Modifications added to help achieve image-based output for single-cell data
 within the context of CytoDataFrame and coSMicQC.</p>
+<p>Mainly for Jupyter notebooks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The data in a pandas DataFrame.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">_metadata</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['_custom_attrs']</span></em><a class="headerlink" href="#id0" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.cytodataframe.frame.CytoDataFrame._on_slider_change">
+<span class="sig-name descname"><span class="pre">_on_slider_change</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">change</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/src/cytodataframe/frame.html#CytoDataFrame._on_slider_change"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.cytodataframe.frame.CytoDataFrame._on_slider_change" title="Link to this definition">#</a></dt>
+<dd><p>Callback triggered when the image brightness/contrast
+slider is adjusted.</p>
+<p>This method updates the internal <cite>_widget_state</cite> to reflect
+the new slider value, clears the current output display, and
+triggers a re-render of the CytoDataFrame’s HTML representation
+(including image thumbnails) based on the new scale setting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>change</strong> (<em>dict</em>) – A dictionary provided by the
+ipywidgets observer mechanism.
+Expected to contain a <cite>‘new’</cite>
+key representing the updated slider value.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.cytodataframe.frame.CytoDataFrame._render_output">
+<span class="sig-name descname"><span class="pre">_render_output</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/src/cytodataframe/frame.html#CytoDataFrame._render_output"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.cytodataframe.frame.CytoDataFrame._render_output" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.cytodataframe.frame.CytoDataFrame._repr_html_">
+<span class="sig-name descname"><span class="pre">_repr_html_</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/src/cytodataframe/frame.html#CytoDataFrame._repr_html_"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.cytodataframe.frame.CytoDataFrame._repr_html_" title="Link to this definition">#</a></dt>
+<dd><p>Returns HTML representation of the underlying pandas DataFrame
+for use within Juypyter notebook environments and similar.</p>
+<p>We modify this to be a delivery mechanism for ipywidgets
+in order to dynamically adjust the dataframe display
+within Jupyter environments.</p>
 <p>Mainly for Jupyter notebooks.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -775,14 +826,17 @@ or None if no relevant file is found.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="src.cytodataframe.image.adjust_with_adaptive_histogram_equalization">
-<span class="sig-prename descclassname"><span class="pre">src.cytodataframe.image.</span></span><span class="sig-name descname"><span class="pre">adjust_with_adaptive_histogram_equalization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/src/cytodataframe/image.html#adjust_with_adaptive_histogram_equalization"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.cytodataframe.image.adjust_with_adaptive_histogram_equalization" title="Link to this definition">#</a></dt>
-<dd><p>Adaptive histogram equalization with additional smoothing to reduce graininess.</p>
+<span class="sig-prename descclassname"><span class="pre">src.cytodataframe.image.</span></span><span class="sig-name descname"><span class="pre">adjust_with_adaptive_histogram_equalization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">brightness</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/src/cytodataframe/image.html#adjust_with_adaptive_histogram_equalization"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.cytodataframe.image.adjust_with_adaptive_histogram_equalization" title="Link to this definition">#</a></dt>
+<dd><p>Adaptive histogram equalization with brightness and contrast tuning via gamma.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>image</strong> (<em>np.ndarray</em>) – The input image to be processed.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image</strong> (<em>np.ndarray</em>) – Input image.</p></li>
+<li><p><strong>brightness</strong> (<em>int</em>) – 0 = dark, 50 = neutral, 100 = bright.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The processed image with enhanced contrast.</p>
+<dd class="field-even"><p>Adjusted image.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>np.ndarray</p>

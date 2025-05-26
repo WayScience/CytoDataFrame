@@ -404,6 +404,7 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">pathlib</span>
 <span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">BytesIO</span><span class="p">,</span> <span class="n">StringIO</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">Any</span><span class="p">,</span>
@@ -417,12 +418,14 @@
     <span class="n">Union</span><span class="p">,</span>
 <span class="p">)</span>
 
+<span class="kn">import</span> <span class="nn">ipywidgets</span> <span class="k">as</span> <span class="nn">widgets</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">skimage</span>
 <span class="kn">import</span> <span class="nn">skimage.io</span>
 <span class="kn">import</span> <span class="nn">skimage.measure</span>
 <span class="kn">from</span> <span class="nn">IPython</span> <span class="kn">import</span> <span class="n">get_ipython</span>
+<span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">HTML</span><span class="p">,</span> <span class="n">display</span>
 <span class="kn">from</span> <span class="nn">pandas._config</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">get_option</span><span class="p">,</span>
 <span class="p">)</span>
@@ -554,6 +557,18 @@
                 <span class="n">display_options</span> <span class="k">if</span> <span class="n">display_options</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
             <span class="p">),</span>
             <span class="s2">&quot;is_transposed&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="c1"># add widget control meta</span>
+            <span class="s2">&quot;_widget_state&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span> <span class="s2">&quot;shown&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+            <span class="s2">&quot;_scale_slider&quot;</span><span class="p">:</span> <span class="n">widgets</span><span class="o">.</span><span class="n">IntSlider</span><span class="p">(</span>
+                <span class="n">value</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+                <span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                <span class="nb">max</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+                <span class="n">step</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Image adjustment:&quot;</span><span class="p">,</span>
+                <span class="n">continuous_update</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">style</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;description_width&quot;</span><span class="p">:</span> <span class="s2">&quot;auto&quot;</span><span class="p">},</span>
+            <span class="p">),</span>
+            <span class="s2">&quot;_output&quot;</span><span class="p">:</span> <span class="n">widgets</span><span class="o">.</span><span class="n">Output</span><span class="p">(),</span>
         <span class="p">}</span>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">CytoDataFrame</span><span class="p">):</span>
@@ -642,7 +657,7 @@
             <span class="k">return</span> <span class="n">result</span>
 
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">CytoDataFrame</span><span class="p">(</span>
+            <span class="n">cdf</span> <span class="o">=</span> <span class="n">CytoDataFrame</span><span class="p">(</span>
                 <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">key</span><span class="p">),</span>
                 <span class="n">data_context_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_context_dir&quot;</span><span class="p">],</span>
                 <span class="n">data_image_paths</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_image_paths&quot;</span><span class="p">],</span>
@@ -654,6 +669,13 @@
                 <span class="n">image_adjustment</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;image_adjustment&quot;</span><span class="p">],</span>
                 <span class="n">display_options</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;display_options&quot;</span><span class="p">],</span>
             <span class="p">)</span>
+
+            <span class="c1"># add widget control meta</span>
+            <span class="n">cdf</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;_widget_state&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;_widget_state&quot;</span><span class="p">]</span>
+            <span class="n">cdf</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;_scale_slider&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;_scale_slider&quot;</span><span class="p">]</span>
+            <span class="n">cdf</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;_output&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;_output&quot;</span><span class="p">]</span>
+
+            <span class="k">return</span> <span class="n">cdf</span>
 
 <div class="viewcode-block" id="CytoDataFrame._return_cytodataframe">
 <a class="viewcode-back" href="../../../python-api.html#src.cytodataframe.frame.CytoDataFrame._return_cytodataframe">[docs]</a>
@@ -685,9 +707,11 @@
 <span class="sd">                information (data context directory and data bounding box).</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="n">result</span> <span class="o">=</span> <span class="n">method</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">CytoDataFrame</span><span class="p">(</span>
+            <span class="n">cdf</span> <span class="o">=</span> <span class="n">CytoDataFrame</span><span class="p">(</span>
                 <span class="n">data</span><span class="o">=</span><span class="n">result</span><span class="p">,</span>
                 <span class="n">data_context_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_context_dir&quot;</span><span class="p">],</span>
                 <span class="n">data_image_paths</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;data_image_paths&quot;</span><span class="p">],</span>
@@ -702,8 +726,14 @@
             <span class="c1"># If the method name is transpose we know that</span>
             <span class="c1"># the dataframe has been transposed.</span>
             <span class="k">if</span> <span class="n">method_name</span> <span class="o">==</span> <span class="s2">&quot;transpose&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;is_transposed&quot;</span><span class="p">]:</span>
-                <span class="n">result</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;is_transposed&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="k">return</span> <span class="n">result</span></div>
+                <span class="n">cdf</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;is_transposed&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+            <span class="c1"># add widget control meta</span>
+            <span class="n">cdf</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;_widget_state&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;_widget_state&quot;</span><span class="p">]</span>
+            <span class="n">cdf</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;_scale_slider&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;_scale_slider&quot;</span><span class="p">]</span>
+            <span class="n">cdf</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;_output&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;_output&quot;</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">cdf</span></div>
 
 
 <div class="viewcode-block" id="CytoDataFrame._wrap_method">
@@ -754,9 +784,18 @@
 <span class="sd">                    information (data context directory</span>
 <span class="sd">                    and data bounding box).</span>
 <span class="sd">            &quot;&quot;&quot;</span>
+
             <span class="n">method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="nb">super</span><span class="p">(</span><span class="n">CytoDataFrame</span><span class="p">,</span> <span class="bp">self</span><span class="p">),</span> <span class="n">method_name</span><span class="p">)</span>
+
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_return_cytodataframe</span><span class="p">(</span>
-                <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">method_name</span><span class="o">=</span><span class="n">method_name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+                <span class="c1"># important: we pass method and method_name</span>
+                <span class="c1"># as positional args to avoid collisions</span>
+                <span class="c1"># with the method signatures and chained</span>
+                <span class="c1"># calls which might be made.</span>
+                <span class="n">method</span><span class="p">,</span>
+                <span class="n">method_name</span><span class="p">,</span>
+                <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">wrapper</span></div>
@@ -776,7 +815,34 @@
 
         <span class="c1"># set the wrapped method for the class instance</span>
         <span class="k">for</span> <span class="n">method_name</span> <span class="ow">in</span> <span class="n">methods_to_wrap</span><span class="p">:</span>
-            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wrap_method</span><span class="p">(</span><span class="n">method_name</span><span class="p">))</span></div>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wrap_method</span><span class="p">(</span><span class="n">method_name</span><span class="o">=</span><span class="n">method_name</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="CytoDataFrame._on_slider_change">
+<a class="viewcode-back" href="../../../python-api.html#src.cytodataframe.frame.CytoDataFrame._on_slider_change">[docs]</a>
+    <span class="k">def</span> <span class="nf">_on_slider_change</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">CytoDataFrame_type</span><span class="p">,</span> <span class="n">change</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Callback triggered when the image brightness/contrast</span>
+<span class="sd">        slider is adjusted.</span>
+
+<span class="sd">        This method updates the internal `_widget_state` to reflect</span>
+<span class="sd">        the new slider value, clears the current output display, and</span>
+<span class="sd">        triggers a re-render of the CytoDataFrame&#39;s HTML representation</span>
+<span class="sd">        (including image thumbnails) based on the new scale setting.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            change (dict):</span>
+<span class="sd">                A dictionary provided by the</span>
+<span class="sd">                ipywidgets observer mechanism.</span>
+<span class="sd">                Expected to contain a `&#39;new&#39;`</span>
+<span class="sd">                key representing the updated slider value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;_widget_state&quot;</span><span class="p">][</span><span class="s2">&quot;scale&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">change</span><span class="p">[</span><span class="s2">&quot;new&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;_output&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">clear_output</span><span class="p">(</span><span class="n">wait</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># redraw output after adjustments to scale state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_render_output</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="CytoDataFrame.get_bounding_box_from_data">
@@ -1268,11 +1334,14 @@
         <span class="c1"># or adaptive histogram equalization</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;image_adjustment&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Adjusting image with custom image adjustment function.&quot;</span><span class="p">)</span>
-            <span class="n">orig_image_array</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;image_adjustment&quot;</span><span class="p">](</span><span class="n">orig_image_array</span><span class="p">)</span>
+            <span class="n">orig_image_array</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;image_adjustment&quot;</span><span class="p">](</span>
+                <span class="n">orig_image_array</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;_widget_state&quot;</span><span class="p">][</span><span class="s2">&quot;scale&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Adjusting image with adaptive histogram equalization.&quot;</span><span class="p">)</span>
             <span class="n">orig_image_array</span> <span class="o">=</span> <span class="n">adjust_with_adaptive_histogram_equalization</span><span class="p">(</span>
-                <span class="n">orig_image_array</span>
+                <span class="n">image</span><span class="o">=</span><span class="n">orig_image_array</span><span class="p">,</span>
+                <span class="n">brightness</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;_widget_state&quot;</span><span class="p">][</span><span class="s2">&quot;scale&quot;</span><span class="p">],</span>
             <span class="p">)</span>
 
         <span class="c1"># Normalize to 0-255 for image saving</span>
@@ -1353,9 +1422,13 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="c1"># Save cropped image to buffer</span>
             <span class="n">png_bytes_io</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">()</span>
-            <span class="n">skimage</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">imsave</span><span class="p">(</span>
-                <span class="n">png_bytes_io</span><span class="p">,</span> <span class="n">cropped_img_array</span><span class="p">,</span> <span class="n">plugin</span><span class="o">=</span><span class="s2">&quot;imageio&quot;</span><span class="p">,</span> <span class="n">extension</span><span class="o">=</span><span class="s2">&quot;.png&quot;</span>
-            <span class="p">)</span>
+
+            <span class="c1"># catch warnings about low contrast images and avoid displaying them</span>
+            <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="ne">UserWarning</span><span class="p">)</span>
+                <span class="n">skimage</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">imsave</span><span class="p">(</span>
+                    <span class="n">png_bytes_io</span><span class="p">,</span> <span class="n">cropped_img_array</span><span class="p">,</span> <span class="n">plugin</span><span class="o">=</span><span class="s2">&quot;imageio&quot;</span><span class="p">,</span> <span class="n">extension</span><span class="o">=</span><span class="s2">&quot;.png&quot;</span>
+                <span class="p">)</span>
             <span class="n">png_bytes</span> <span class="o">=</span> <span class="n">png_bytes_io</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span>
 
         <span class="k">except</span> <span class="p">(</span><span class="ne">FileNotFoundError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
@@ -1417,10 +1490,10 @@
             <span class="k">return</span> <span class="n">start_display</span> <span class="o">+</span> <span class="n">end_display</span></div>
 
 
-<div class="viewcode-block" id="CytoDataFrame._repr_html_">
-<a class="viewcode-back" href="../../../python-api.html#src.cytodataframe.frame.CytoDataFrame._repr_html_">[docs]</a>
-    <span class="k">def</span> <span class="nf">_repr_html_</span><span class="p">(</span>  <span class="c1"># noqa: C901, PLR0912, PLR0915</span>
-        <span class="bp">self</span><span class="p">:</span> <span class="n">CytoDataFrame_type</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+<div class="viewcode-block" id="CytoDataFrame._generate_jupyter_dataframe_html">
+<a class="viewcode-back" href="../../../python-api.html#src.cytodataframe.frame.CytoDataFrame._generate_jupyter_dataframe_html">[docs]</a>
+    <span class="k">def</span> <span class="nf">_generate_jupyter_dataframe_html</span><span class="p">(</span>  <span class="c1"># noqa: C901, PLR0912, PLR0915</span>
+        <span class="bp">self</span><span class="p">:</span> <span class="n">CytoDataFrame_type</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns HTML representation of the underlying pandas DataFrame</span>
@@ -1447,7 +1520,13 @@
             <span class="n">val</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;&gt;&quot;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;&amp;gt;&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
             <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&lt;pre&gt;</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">&lt;/pre&gt;&quot;</span>
 
+        <span class="c1"># if we&#39;re in a notebook process as though in a jupyter environment</span>
         <span class="k">if</span> <span class="n">get_option</span><span class="p">(</span><span class="s2">&quot;display.notebook_repr_html&quot;</span><span class="p">):</span>
+            <span class="c1"># Show widget only once per instance per notebook session</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;_widget_state&quot;</span><span class="p">][</span><span class="s2">&quot;shown&quot;</span><span class="p">]:</span>
+                <span class="n">display</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;_scale_slider&quot;</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;_widget_state&quot;</span><span class="p">][</span><span class="s2">&quot;shown&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
             <span class="n">max_rows</span> <span class="o">=</span> <span class="n">get_option</span><span class="p">(</span><span class="s2">&quot;display.max_rows&quot;</span><span class="p">)</span>
             <span class="n">min_rows</span> <span class="o">=</span> <span class="n">get_option</span><span class="p">(</span><span class="s2">&quot;display.min_rows&quot;</span><span class="p">)</span>
             <span class="n">max_cols</span> <span class="o">=</span> <span class="n">get_option</span><span class="p">(</span><span class="s2">&quot;display.max_columns&quot;</span><span class="p">)</span>
@@ -1665,6 +1744,143 @@
 
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="CytoDataFrame._render_output">
+<a class="viewcode-back" href="../../../python-api.html#src.cytodataframe.frame.CytoDataFrame._render_output">[docs]</a>
+    <span class="k">def</span> <span class="nf">_render_output</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">CytoDataFrame_type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="c1"># Return a hidden div that nbconvert will keep but Jupyter will ignore</span>
+        <span class="n">html_content</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_jupyter_dataframe_html</span><span class="p">()</span>
+
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;_output&quot;</span><span class="p">]:</span>
+            <span class="n">display</span><span class="p">(</span><span class="n">HTML</span><span class="p">(</span><span class="n">html_content</span><span class="p">))</span>
+
+        <span class="c1"># We duplicate the display so that the jupyter notebook</span>
+        <span class="c1"># retains printable output (which appears in static exports</span>
+        <span class="c1"># such as PDFs or GitHub webpages). Ipywidget output</span>
+        <span class="c1"># rendering is not retained in these formats, so we must</span>
+        <span class="c1"># add this in order to retain visibility of the data.</span>
+        <span class="n">display</span><span class="p">(</span>
+            <span class="n">HTML</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                &lt;style&gt;</span>
+<span class="s2">                    /* Hide by default on screen */</span>
+<span class="s2">                    .print-view </span><span class="se">{{</span>
+<span class="s2">                        display: none;</span>
+<span class="s2">                        margin-top: 1em;</span>
+<span class="s2">                    </span><span class="se">}}</span>
+
+<span class="s2">                    /* Show only when printing */</span>
+<span class="s2">                    @media print </span><span class="se">{{</span>
+<span class="s2">                        .print-view </span><span class="se">{{</span>
+<span class="s2">                            display: block;</span>
+<span class="s2">                            margin-top: 1em;</span>
+<span class="s2">                        </span><span class="se">}}</span>
+<span class="s2">                    </span><span class="se">}}</span>
+
+<span class="s2">                &lt;/style&gt;</span>
+<span class="s2">                &lt;div class=&quot;print-view&quot;&gt;</span>
+<span class="s2">                        </span><span class="si">{</span><span class="n">html_content</span><span class="si">}</span>
+<span class="s2">                &lt;/div&gt;</span>
+<span class="s2">                &quot;&quot;&quot;</span>
+            <span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CytoDataFrame._repr_html_">
+<a class="viewcode-back" href="../../../python-api.html#src.cytodataframe.frame.CytoDataFrame._repr_html_">[docs]</a>
+    <span class="k">def</span> <span class="nf">_repr_html_</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">CytoDataFrame_type</span><span class="p">,</span> <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns HTML representation of the underlying pandas DataFrame</span>
+<span class="sd">        for use within Juypyter notebook environments and similar.</span>
+
+<span class="sd">        We modify this to be a delivery mechanism for ipywidgets</span>
+<span class="sd">        in order to dynamically adjust the dataframe display</span>
+<span class="sd">        within Jupyter environments.</span>
+
+<span class="sd">        Mainly for Jupyter notebooks.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: The data in a pandas DataFrame.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># if we&#39;re in a notebook process as though in a jupyter environment</span>
+        <span class="k">if</span> <span class="n">get_option</span><span class="p">(</span><span class="s2">&quot;display.notebook_repr_html&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">debug</span><span class="p">:</span>
+            <span class="c1"># Show a vbox with the widgets if we haven&#39;t already.</span>
+            <span class="c1"># This is used to initialize the display.</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;_widget_state&quot;</span><span class="p">][</span><span class="s2">&quot;shown&quot;</span><span class="p">]:</span>
+                <span class="n">display</span><span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="n">widgets</span><span class="o">.</span><span class="n">VBox</span><span class="p">(</span>
+                            <span class="p">[</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;_scale_slider&quot;</span><span class="p">],</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;_output&quot;</span><span class="p">],</span>
+                            <span class="p">]</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;_widget_state&quot;</span><span class="p">][</span><span class="s2">&quot;shown&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+                <span class="c1"># render the first HTML output for display</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_render_output</span><span class="p">()</span>
+
+            <span class="c1"># set an observer for the slider</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_custom_attrs</span><span class="p">[</span><span class="s2">&quot;_scale_slider&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">observe</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_on_slider_change</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="s2">&quot;value&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># allow for debug mode to be set which returns the HTML</span>
+        <span class="c1"># without widgets.</span>
+
+        <span class="k">elif</span> <span class="n">debug</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_jupyter_dataframe_html</span><span class="p">()</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">CytoDataFrame_type</span><span class="p">,</span> <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the string representation of the CytoDataFrame.</span>
+
+<span class="sd">        In notebook environments, this method suppresses the default string</span>
+<span class="sd">        representation to prevent interference with the interactive `_repr_html_`</span>
+<span class="sd">        output (e.g., ipywidgets-based GUI). When `debug` is set to True, the</span>
+<span class="sd">        standard string representation is returned even in notebook contexts.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            debug (bool, optional):</span>
+<span class="sd">                If True, always return the standard representation regardless</span>
+<span class="sd">                of notebook environment. Defaults to False.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str:</span>
+<span class="sd">                The string representation of the DataFrame (or an empty string</span>
+<span class="sd">                in notebook view mode when debug is False).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">get_option</span><span class="p">(</span><span class="s2">&quot;display.notebook_repr_html&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">debug</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__repr__</span><span class="p">()</span>
+
+<div class="viewcode-block" id="CytoDataFrame._enbable_debug_mode">
+<a class="viewcode-back" href="../../../python-api.html#src.cytodataframe.frame.CytoDataFrame._enbable_debug_mode">[docs]</a>
+    <span class="k">def</span> <span class="nf">_enbable_debug_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">CytoDataFrame_type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Enable debug mode for the CytoDataFrame instance.</span>
+<span class="sd">        This method sets the logger level to DEBUG and</span>
+<span class="sd">        enables debug mode for the instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+        <span class="kn">import</span> <span class="nn">sys</span>
+
+        <span class="c1"># Only add a handler if none exist (to avoid duplicates)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">logger</span><span class="o">.</span><span class="n">handlers</span><span class="p">:</span>
+            <span class="n">handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+            <span class="n">handler</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>  <span class="c1"># This is critical</span>
+            <span class="n">formatter</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%(levelname)s</span><span class="s2">: </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">formatter</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">handler</span><span class="p">)</span></div>
 </div>
 
 </pre></div>
