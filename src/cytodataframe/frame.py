@@ -6,6 +6,7 @@ import base64
 import logging
 import pathlib
 import re
+import warnings
 from io import BytesIO, StringIO
 from typing import (
     Any,
@@ -19,12 +20,14 @@ from typing import (
     Union,
 )
 
+import ipywidgets as widgets
 import numpy as np
 import pandas as pd
 import skimage
 import skimage.io
 import skimage.measure
 from IPython import get_ipython
+from IPython.display import HTML, display
 from pandas._config import (
     get_option,
 )
@@ -154,6 +157,18 @@ class CytoDataFrame(pd.DataFrame):
                 display_options if display_options is not None else None
             ),
             "is_transposed": False,
+            # add widget control meta
+            "_widget_state": {"scale": 50, "shown": False},
+            "_scale_slider": widgets.IntSlider(
+                value=50,
+                min=0,
+                max=100,
+                step=1,
+                description="Image adjustment:",
+                continuous_update=False,
+                style={"description_width": "auto"},
+            ),
+            "_output": widgets.Output(),
         }
 
         if isinstance(data, CytoDataFrame):
@@ -242,7 +257,7 @@ class CytoDataFrame(pd.DataFrame):
             return result
 
         elif isinstance(result, pd.DataFrame):
-            return CytoDataFrame(
+            cdf = CytoDataFrame(
                 super().__getitem__(key),
                 data_context_dir=self._custom_attrs["data_context_dir"],
                 data_image_paths=self._custom_attrs["data_image_paths"],
@@ -254,6 +269,13 @@ class CytoDataFrame(pd.DataFrame):
                 image_adjustment=self._custom_attrs["image_adjustment"],
                 display_options=self._custom_attrs["display_options"],
             )
+
+            # add widget control meta
+            cdf._custom_attrs["_widget_state"] = self._custom_attrs["_widget_state"]
+            cdf._custom_attrs["_scale_slider"] = self._custom_attrs["_scale_slider"]
+            cdf._custom_attrs["_output"] = self._custom_attrs["_output"]
+
+            return cdf
 
     def _return_cytodataframe(
         self: CytoDataFrame_type,
@@ -285,8 +307,9 @@ class CytoDataFrame(pd.DataFrame):
         """
 
         result = method(*args, **kwargs)
+
         if isinstance(result, pd.DataFrame):
-            result = CytoDataFrame(
+            cdf = CytoDataFrame(
                 data=result,
                 data_context_dir=self._custom_attrs["data_context_dir"],
                 data_image_paths=self._custom_attrs["data_image_paths"],
@@ -301,8 +324,14 @@ class CytoDataFrame(pd.DataFrame):
             # If the method name is transpose we know that
             # the dataframe has been transposed.
             if method_name == "transpose" and not self._custom_attrs["is_transposed"]:
-                result._custom_attrs["is_transposed"] = True
-        return result
+                cdf._custom_attrs["is_transposed"] = True
+
+            # add widget control meta
+            cdf._custom_attrs["_widget_state"] = self._custom_attrs["_widget_state"]
+            cdf._custom_attrs["_scale_slider"] = self._custom_attrs["_scale_slider"]
+            cdf._custom_attrs["_output"] = self._custom_attrs["_output"]
+
+        return cdf
 
     def _wrap_method(self: CytoDataFrame_type, method_name: str) -> Callable:
         """
@@ -379,6 +408,30 @@ class CytoDataFrame(pd.DataFrame):
         # set the wrapped method for the class instance
         for method_name in methods_to_wrap:
             setattr(self, method_name, self._wrap_method(method_name=method_name))
+
+    def _on_slider_change(self: CytoDataFrame_type, change: Dict[str, Any]) -> None:
+        """
+        Callback triggered when the image brightness/contrast
+        slider is adjusted.
+
+        This method updates the internal `_widget_state` to reflect
+        the new slider value, clears the current output display, and
+        triggers a re-render of the CytoDataFrame's HTML representation
+        (including image thumbnails) based on the new scale setting.
+
+        Args:
+            change (dict):
+                A dictionary provided by the
+                ipywidgets observer mechanism.
+                Expected to contain a `'new'`
+                key representing the updated slider value.
+        """
+
+        self._custom_attrs["_widget_state"]["scale"] = change["new"]
+        self._custom_attrs["_output"].clear_output(wait=True)
+
+        # redraw output after adjustments to scale state
+        self._render_output()
 
     def get_bounding_box_from_data(
         self: CytoDataFrame_type,
@@ -843,11 +896,14 @@ class CytoDataFrame(pd.DataFrame):
         # or adaptive histogram equalization
         if self._custom_attrs["image_adjustment"] is not None:
             logger.debug("Adjusting image with custom image adjustment function.")
-            orig_image_array = self._custom_attrs["image_adjustment"](orig_image_array)
+            orig_image_array = self._custom_attrs["image_adjustment"](
+                orig_image_array, self._custom_attrs["_widget_state"]["scale"]
+            )
         else:
             logger.debug("Adjusting image with adaptive histogram equalization.")
             orig_image_array = adjust_with_adaptive_histogram_equalization(
-                orig_image_array
+                image=orig_image_array,
+                brightness=self._custom_attrs["_widget_state"]["scale"],
             )
 
         # Normalize to 0-255 for image saving
@@ -928,9 +984,13 @@ class CytoDataFrame(pd.DataFrame):
         try:
             # Save cropped image to buffer
             png_bytes_io = BytesIO()
-            skimage.io.imsave(
-                png_bytes_io, cropped_img_array, plugin="imageio", extension=".png"
-            )
+
+            # catch warnings about low contrast images and avoid displaying them
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", UserWarning)
+                skimage.io.imsave(
+                    png_bytes_io, cropped_img_array, plugin="imageio", extension=".png"
+                )
             png_bytes = png_bytes_io.getvalue()
 
         except (FileNotFoundError, ValueError) as exc:
@@ -988,8 +1048,8 @@ class CytoDataFrame(pd.DataFrame):
             logger.debug("Detected display rows: %s", start_display + end_display)
             return start_display + end_display
 
-    def _repr_html_(  # noqa: C901, PLR0912, PLR0915
-        self: CytoDataFrame_type, key: Optional[Union[int, str]] = None
+    def _generate_jupyter_dataframe_html(  # noqa: C901, PLR0912, PLR0915
+        self: CytoDataFrame_type,
     ) -> str:
         """
         Returns HTML representation of the underlying pandas DataFrame
@@ -1016,7 +1076,13 @@ class CytoDataFrame(pd.DataFrame):
             val = val.replace(">", r"&gt;", 1)
             return f"<pre>{val}</pre>"
 
+        # if we're in a notebook process as though in a jupyter environment
         if get_option("display.notebook_repr_html"):
+            # Show widget only once per instance per notebook session
+            if not self._custom_attrs["_widget_state"]["shown"]:
+                display(self._custom_attrs["_scale_slider"])
+                self._custom_attrs["_widget_state"]["shown"] = True
+
             max_rows = get_option("display.max_rows")
             min_rows = get_option("display.min_rows")
             max_cols = get_option("display.max_columns")
@@ -1234,3 +1300,131 @@ class CytoDataFrame(pd.DataFrame):
 
         else:
             return None
+
+    def _render_output(self: CytoDataFrame_type) -> str:
+        # Return a hidden div that nbconvert will keep but Jupyter will ignore
+        html_content = self._generate_jupyter_dataframe_html()
+
+        with self._custom_attrs["_output"]:
+            display(HTML(html_content))
+
+        # We duplicate the display so that the jupyter notebook
+        # retains printable output (which appears in static exports
+        # such as PDFs or GitHub webpages). Ipywidget output
+        # rendering is not retained in these formats, so we must
+        # add this in order to retain visibility of the data.
+        display(
+            HTML(
+                f"""
+                <style>
+                    /* Hide by default on screen */
+                    .print-view {{
+                        display: none;
+                        margin-top: 1em;
+                    }}
+
+                    /* Show only when printing */
+                    @media print {{
+                        .print-view {{
+                            display: block;
+                            margin-top: 1em;
+                        }}
+                    }}
+
+                </style>
+                <div class="print-view">
+                        {html_content}
+                </div>
+                """
+            )
+        )
+
+    def _repr_html_(self: CytoDataFrame_type, debug: bool = False) -> str:
+        """
+        Returns HTML representation of the underlying pandas DataFrame
+        for use within Juypyter notebook environments and similar.
+
+        We modify this to be a delivery mechanism for ipywidgets
+        in order to dynamically adjust the dataframe display
+        within Jupyter environments.
+
+        Mainly for Jupyter notebooks.
+
+        Returns:
+            str: The data in a pandas DataFrame.
+        """
+
+        # if we're in a notebook process as though in a jupyter environment
+        if get_option("display.notebook_repr_html") and not debug:
+            # Show a vbox with the widgets if we haven't already.
+            # This is used to initialize the display.
+            if not self._custom_attrs["_widget_state"]["shown"]:
+                display(
+                    (
+                        widgets.VBox(
+                            [
+                                self._custom_attrs["_scale_slider"],
+                                self._custom_attrs["_output"],
+                            ]
+                        )
+                    )
+                )
+                self._custom_attrs["_widget_state"]["shown"] = True
+
+                # render the first HTML output for display
+                self._render_output()
+
+            # set an observer for the slider
+            self._custom_attrs["_scale_slider"].observe(
+                self._on_slider_change, names="value"
+            )
+
+        # allow for debug mode to be set which returns the HTML
+        # without widgets.
+
+        elif debug:
+            return self._generate_jupyter_dataframe_html()
+
+        else:
+            return None
+
+    def __repr__(self: CytoDataFrame_type, debug: bool = False) -> str:
+        """
+        Return the string representation of the CytoDataFrame.
+
+        In notebook environments, this method suppresses the default string
+        representation to prevent interference with the interactive `_repr_html_`
+        output (e.g., ipywidgets-based GUI). When `debug` is set to True, the
+        standard string representation is returned even in notebook contexts.
+
+        Args:
+            debug (bool, optional):
+                If True, always return the standard representation regardless
+                of notebook environment. Defaults to False.
+
+        Returns:
+            str:
+                The string representation of the DataFrame (or an empty string
+                in notebook view mode when debug is False).
+        """
+        if get_option("display.notebook_repr_html") and not debug:
+            return ""
+
+        return super().__repr__()
+
+    def _enbable_debug_mode(self: CytoDataFrame_type) -> None:
+        """
+        Enable debug mode for the CytoDataFrame instance.
+        This method sets the logger level to DEBUG and
+        enables debug mode for the instance.
+        """
+        logger.setLevel(logging.DEBUG)
+        import sys
+
+        # Only add a handler if none exist (to avoid duplicates)
+        if not logger.handlers:
+            handler = logging.StreamHandler(sys.stdout)
+            handler.setLevel(logging.DEBUG)  # This is critical
+            formatter = logging.Formatter("%(levelname)s: %(message)s")
+            handler.setFormatter(formatter)
+            logger.addHandler(handler)

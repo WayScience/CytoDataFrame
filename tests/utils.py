@@ -48,7 +48,7 @@ def cytodataframe_image_display_contains_pixels(
     """
 
     # Gather HTML output from CytoDataFrame
-    html_output = frame[image_cols]._repr_html_()
+    html_output = frame[image_cols]._repr_html_(debug=True)
 
     # Extract all base64 image data from the HTML
     matches = re.findall(r'data:image/png;base64,([^"]+)', html_output)
