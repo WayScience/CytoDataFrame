@@ -57,7 +57,7 @@ repos:
     rev: "v0.11.11"
     hooks:
     -   id: ruff-format
-    -   id: ruff
+    -   id: ruff-check
 -   repo: https://gitlab.com/vojko.pribudic.foss/pre-commit-update
     rev: v0.6.0
     hooks:
