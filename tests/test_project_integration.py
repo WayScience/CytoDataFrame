@@ -82,4 +82,7 @@ def test_cosmicqc_find_outliers_cfret_cli():
     # check that we don't have None and we do have something
     # that resembles a dataframe object in the tui
     assert result.stdout is not None
-    assert "Nuclei_AreaShape_Area" in str(result.stdout)
+    assert all(
+        check_str in str(result.stdout)
+        for check_str in ["Nuclei_AreaShape_Area", "Nuclei_AreaShape_FormFactor"]
+    )
