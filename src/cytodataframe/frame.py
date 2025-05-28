@@ -1407,8 +1407,6 @@ class CytoDataFrame(pd.DataFrame):
                 The string representation of the DataFrame (or an empty string
                 in notebook view mode when debug is False).
         """
-        if get_option("display.notebook_repr_html") and not debug:
-            return ""
 
         return super().__repr__()
 
