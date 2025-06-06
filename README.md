@@ -14,7 +14,17 @@ CytoDataFrame is an advanced in-memory data analysis format designed for single-
 Traditional single-cell profiling often excludes the associated images from analysis, limiting the scope of research.
 CytoDataFrame bridges this gap, offering a purpose-built solution for comprehensive analysis that incorporates both the data and images, empowering more detailed and visual insights in single-cell research.
 
-CytoDataFrame development began within [coSMicQC](https://github.com/WayScience/coSMicQC) - a single-cell profile quality control package.
+CytoDataFrame is best suited for work within Jupyter notebooks.
+With CytoDataFrame you can:
+
+- View image objects alongside their feature data using a Pandas DataFrame-like interface.
+- Highlight image objects using mask or outline files to understand their segmentation.
+- Adjust image displays on-the-fly using interactive slider widgets.
+
+📓 ___Want to see CytoDataFrame in action?___ Check out our [example notebook](docs/src/examples/cytodataframe_at_a_glance.ipynb) for a quick tour of its key features.
+
+> ✨ CytoDataFrame development began within **[coSMicQC](https://github.com/WayScience/coSMicQC)** - a single-cell profile quality control package.
+> Please check out our work there as well!
 
 ## Installation
 
