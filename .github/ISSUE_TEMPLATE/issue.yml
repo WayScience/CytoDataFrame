@@ -10,14 +10,14 @@ body:
       label: Is this a duplicate of an existing idea for this project?
       description: >
         Please make sure to search in the
-        [issues](https://github.com/WayScience/CytoDataFrame/issues) first
+        [issues](https://github.com/cytomining/CytoDataFrame/issues) first
         to see whether the same issue was reported already.
         If you find an existing issue, please don't hesitate to comment
         on it or add a reaction to existing content!
       options:
         - label: >
             I found no existing
-            [issues](https://github.com/WayScience/CytoDataFrame/issues)
+            [issues](https://github.com/cytomining/CytoDataFrame/issues)
             covering this topic.
           required: true
 
