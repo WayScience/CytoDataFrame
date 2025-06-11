@@ -21,8 +21,8 @@ sys.path.insert(0, basedir)
 
 project = "CytoDataFrame"
 # is used here due to sphinx decision-making: https://github.com/sphinx-doc/sphinx/issues/8132
-copyright = "2024, WayScience Community"  # noqa: A001
-author = "WayScience Community"
+copyright = "2024, Cytomining Community"  # noqa: A001
+author = "Cytomining Community"
 
 # -- General configuration ---------------------------------------------------
 
@@ -55,7 +55,7 @@ html_theme = "pydata_sphinx_theme"
 html_theme_options = {
     "external_links": [
         {
-            "url": "https://github.com/WayScience/coSMicQC",
+            "url": "https://github.com/cytomining/coSMicQC",
             "name": "coSMicQC",
         },
     ],
@@ -63,7 +63,7 @@ html_theme_options = {
     "icon_links": [
         {
             "name": "GitHub",
-            "url": "https://github.com/WayScience/CytoDataFrame",
+            "url": "https://github.com/cytomining/CytoDataFrame",
             "icon": "fa-brands fa-github",
         },
     ],

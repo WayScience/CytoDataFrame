@@ -15,7 +15,7 @@
 # # CytoDataFrame at a Glance
 #
 # This notebook demonstrates various capabilities of
-# [CytoDataFrame](https://github.com/WayScience/CytoDataFrame) using examples.
+# [CytoDataFrame](https://github.com/cytomining/CytoDataFrame) using examples.
 #
 # CytoDataFrame is intended to provide you a Pandas-like
 # DataFrame experience which is enhanced with single-cell
