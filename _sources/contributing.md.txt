@@ -11,7 +11,7 @@ If you are stuck, please feel free to ask any questions or ask for help.
 This project is governed by our [code of conduct](code_of_conduct.md). By participating, you are expected to uphold this code.
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported to community leaders responsible for enforcement.
-Please open a [new security advisory notice](https://github.com/WayScience/CytoDataFrame/security/advisories/new) (using defaults or "n/a" where unable to fill in the form) to privately notify us of any incidents of this nature.
+Please open a [new security advisory notice](https://github.com/cytomining/CytoDataFrame/security/advisories/new) (using defaults or "n/a" where unable to fill in the form) to privately notify us of any incidents of this nature.
 
 ## Development
 
@@ -59,7 +59,7 @@ We welcome anyone to use [GitHub issues](https://docs.github.com/en/issues/track
 
 Specifically, there are several ways to suggest or make changes to this repository:
 
-1. Open a GitHub issue: https://github.com/WayScience/CytoDataFrame/issues
+1. Open a GitHub issue: https://github.com/cytomining/CytoDataFrame/issues
 1. Create a pull request from a forked branch of the repository
 
 ### Creating a pull request
@@ -74,7 +74,7 @@ Once you make the necessary changes on this branch, you should file a pull reque
 The content and description of your pull request are directly related to the speed at which we are able to review, approve, and merge your contribution.
 To ensure an efficient review process please perform the following steps:
 
-1. Follow all instructions in the [pull request template](https://github.com/WayScience/CytoDataFrame/blob/main/.github/PULL_REQUEST_TEMPLATE.md)
+1. Follow all instructions in the [pull request template](https://github.com/cytomining/CytoDataFrame/blob/main/.github/PULL_REQUEST_TEMPLATE.md)
 1. Triple check that your pull request is adding _one_ specific feature or additional group of content.
    Small, bite-sized pull requests move so much faster than large pull requests.
 1. After submitting your pull request, ensure that your contribution passes all status checks (e.g. passes all tests)
@@ -97,7 +97,7 @@ Versioning for the project is intended to align with GitHub Releases which provi
 
 ### Releases
 
-We publish source code by using [GitHub Releases](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases) available [here](https://github.com/wayscience/CytoDataFrame/releases).
+We publish source code by using [GitHub Releases](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases) available [here](https://github.com/cytomining/CytoDataFrame/releases).
 We publish a related Python package through the [Python Packaging Index (PyPI)](https://pypi.org/) available [here](https://pypi.org/project/CytoDataFrame/).
 
 #### Release Publishing Process
@@ -109,7 +109,7 @@ Notes about [semantic version](https://en.wikipedia.org/wiki/Software_versioning
 CytoDataFrame version specifications are controlled through [`poetry-dynamic-versioning`](https://github.com/mtkennerly/poetry-dynamic-versioning) which leverages [`dunamai`](https://github.com/mtkennerly/dunamai) to create version data based on [git tags](https://git-scm.com/book/en/v2/Git-Basics-Tagging) and commits.
 CytoDataFrame release git tags are automatically applied through [GitHub Releases](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases) and related inferred changes from [`release-drafter`](https://github.com/release-drafter/release-drafter).
 
-1. Open a pull request and use a repository label for `release-<semver release type>` to label the pull request for visibility with [`release-drafter`](https://github.com/release-drafter/release-drafter) (for example, see [CytoDataFrame#24](https://github.com/wayscience/CytoDataFrame/pull/24) as a reference of a semver patch update).
+1. Open a pull request and use a repository label for `release-<semver release type>` to label the pull request for visibility with [`release-drafter`](https://github.com/release-drafter/release-drafter) (for example, see [CytoDataFrame#24](https://github.com/cytomining/CytoDataFrame/pull/24) as a reference of a semver patch update).
 1. On merging the pull request for the release, a [GitHub Actions workflow](https://docs.github.com/en/actions/using-workflows) defined in `draft-release.yml` leveraging [`release-drafter`](https://github.com/release-drafter/release-drafter) will draft a release for maintainers.
 1. The draft GitHub release will include a version tag based on the GitHub PR label applied and `release-drafter`.
 1. Make modifications as necessary to the draft GitHub release, then publish the release (the draft release does not normally need additional modifications).
